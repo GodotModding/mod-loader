@@ -312,7 +312,7 @@ static func _load_mod_zips(zip_paths: Array[String]) -> int:
 	return loaded_count
 
 
-# Instance every mod and add it as a node to the Mod Loader.
+# Instantiate every mod and add it as a node to the Mod Loader.
 # Runs mods in the order stored in mod_load_order.
 func _init_mod(mod: ModData) -> void:
 	var mod_main_path := mod.get_required_mod_file_path(ModData.required_mod_files.MOD_MAIN)

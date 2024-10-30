@@ -49,7 +49,7 @@ static func _get_fixed_cmdline_args() -> PackedStringArray:
 static func fix_godot_cmdline_args_string_space_splitting(args: PackedStringArray) -> PackedStringArray:
 	if not OS.has_feature("editor"): # only happens in editor builds
 		return args
-	if OS.has_feature("Windows"): # windows is unaffected
+	if OS.has_feature("windows"): # windows is unaffected
 		return args
 
 	var fixed_args := PackedStringArray([])

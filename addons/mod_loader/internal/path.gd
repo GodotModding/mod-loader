@@ -5,7 +5,7 @@ extends RefCounted
 # This Class provides util functions for working with paths.
 # Currently all of the included functions are internal and should only be used by the mod loader itself.
 
-const LOG_NAME := "ModLoader:Path3D"
+const LOG_NAME := "ModLoader:Path"
 const MOD_CONFIG_DIR_PATH := "user://configs"
 
 
@@ -14,7 +14,7 @@ const MOD_CONFIG_DIR_PATH := "user://configs"
 static func get_local_folder_dir(subfolder: String = "") -> String:
 	var game_install_directory := OS.get_executable_path().get_base_dir()
 
-	if OS.get_name() == "OSX":
+	if OS.get_name() == "macOS":
 		game_install_directory = game_install_directory.get_base_dir().get_base_dir()
 
 	# Fix for running the game through the Godot editor (as the EXE path would be

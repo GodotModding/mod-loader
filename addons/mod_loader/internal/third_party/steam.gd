@@ -70,7 +70,7 @@ static func _get_path_to_workshop() -> String:
 	# Reconstruct the path, now that it has "common/GameName" removed
 	path = "/".join(path_array)
 
-	# Append the workgame's workshop path
+	# Append the game's workshop path
 	path = path.path_join("workshop/content/" + _get_steam_app_id())
 
 	return path
