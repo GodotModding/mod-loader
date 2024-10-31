@@ -1,4 +1,11 @@
-extends Object
+class_name _ModLoaderModHookPreProcessor
+extends RefCounted
+
+
+# This class is used to process the source code from a script at a given path.
+# Currently all of the included functions are internal and should only be used by the mod loader itself.
+
+const LOG_NAME := "ModLoader:ModHookPreProcessor"
 
 const REQUIRE_EXPLICIT_ADDITION := false
 const METHOD_PREFIX := "vanilla_"
@@ -10,16 +17,16 @@ const MOD_LOADER_HOOKS_START_STRING := \
 
 ## finds function names used as setters and getters (excluding inline definitions)
 ## group 2 and 4 contain the xetter names
-static var regex_getter_setter := RegEx.create_from_string("(.*?[sg]et\\s*=\\s*)(\\w+)(\\g<1>)?(\\g<2>)?")
+var regex_getter_setter := RegEx.create_from_string("(.*?[sg]et\\s*=\\s*)(\\w+)(\\g<1>)?(\\g<2>)?")
 
 ## finds every instance where super() is called
 ## returns only the super word, excluding the (, as match to make substitution easier
-static var regex_super_call := RegEx.create_from_string("\\bsuper(?=\\s*\\()")
+var regex_super_call := RegEx.create_from_string("\\bsuper(?=\\s*\\()")
 
 ## matches the indented function body
 ## needs to start from the : of a function definition to work (offset)
 ## the body of a function is every line that is empty or starts with an indent or comment
-static var regex_func_body := RegEx.create_from_string("(?smn)\\N*(\\n^(([\\t #]+\\N*)|$))*")
+var regex_func_body := RegEx.create_from_string("(?smn)\\N*(\\n^(([\\t #]+\\N*)|$))*")
 
 
 var hashmap := {}
@@ -30,8 +37,12 @@ func process_begin() -> void:
 
 
 func process_script(path: String) -> String:
+	var start_time := Time.get_ticks_msec()
+	ModLoaderLog.debug("Start processing script at path: %s" % path, LOG_NAME)
 	var current_script := load(path) as GDScript
+
 	var source_code := current_script.source_code
+
 	var source_code_additions := ""
 
 	# We need to stop all vanilla methods from forming inheritance chains,
@@ -39,7 +50,7 @@ func process_script(path: String) -> String:
 	var class_prefix := str(hash(path))
 	var method_store: Array[String] = []
 
-	var getters_setters := collect_getters_and_setters(source_code)
+	var getters_setters := collect_getters_and_setters(source_code, regex_getter_setter)
 
 	var moddable_methods := current_script.get_script_method_list().filter(
 		func is_func_moddable(method: Dictionary):
@@ -95,15 +106,23 @@ func process_script(path: String) -> String:
 		# including the methods from the scripts it extends,
 		# which leads to multiple entries in the list if they are overridden by the child script.
 		method_store.push_back(method.name)
-		source_code = edit_vanilla_method(method.name, is_static, source_code, METHOD_PREFIX + class_prefix)
+		source_code = edit_vanilla_method(
+			method.name,
+			is_static,
+			source_code,
+			regex_func_body,
+			regex_super_call,
+			METHOD_PREFIX + class_prefix
+		)
 		source_code_additions += "\n%s" % mod_loader_hook_string
 
 	#if we have some additions to the code, append them at the end
 	if source_code_additions != "":
 		source_code = "%s\n%s\n%s" % [source_code, MOD_LOADER_HOOKS_START_STRING, source_code_additions]
 
-	return source_code
+	ModLoaderLog.debug("Finished processing script at path: %s in %s ms" % [path, Time.get_ticks_msec() - start_time], LOG_NAME)
 
+	return source_code
 
 
 static func get_function_arg_name_string(args: Array) -> String:
@@ -169,23 +188,39 @@ static func get_closing_paren_index(opening_paren_index: int, text: String) -> i
 	return closing_paren_index
 
 
-static func edit_vanilla_method(method_name: String, is_static: bool, text: String, prefix := METHOD_PREFIX, offset := 0) -> String:
+static func edit_vanilla_method(
+	method_name: String,
+	is_static: bool,
+	text: String,
+	regex_func_body: RegEx,
+	regex_super_call: RegEx,
+	prefix := METHOD_PREFIX,
+	offset := 0
+) -> String:
 	var func_def := match_func_with_whitespace(method_name, text, offset)
 
 	if not func_def:
 		return text
 
 	if not is_top_level_func(text, func_def.get_start(), is_static):
-		return edit_vanilla_method(method_name, is_static, text, prefix, func_def.get_end())
+		return edit_vanilla_method(
+				method_name,
+				is_static,
+				text,
+				regex_func_body,
+				regex_super_call,
+				prefix,
+				func_def.get_end()
+			)
 
-	text = fix_method_super(method_name, func_def.get_end(), text)
+	text = fix_method_super(method_name, func_def.get_end(), text, regex_func_body, regex_super_call)
 	text = text.erase(func_def.get_start(), func_def.get_end() - func_def.get_start())
 	text = text.insert(func_def.get_start(), "func %s_%s(" % [prefix, method_name])
 
 	return text
 
 
-static func fix_method_super(method_name: String, func_def_end: int, text: String, offset := 0) -> String:
+static func fix_method_super(method_name: String, func_def_end: int, text: String, regex_func_body: RegEx, regex_super_call: RegEx, offset := 0) -> String:
 	var closing_paren_index := get_closing_paren_index(func_def_end, text)
 	var func_body_start_index := text.find(":", closing_paren_index) +1
 
@@ -219,7 +254,8 @@ static func get_mod_loader_hook(
 	script_path: String,
 	hash_before:int,
 	hash_after:int,
-	method_prefix := METHOD_PREFIX) -> String:
+	method_prefix := METHOD_PREFIX
+) -> String:
 	var type_string := " -> %s" % method_type if not method_type.is_empty() else ""
 	var static_string := "static " if is_static else ""
 	# Cannot use "self" inside a static function.
@@ -229,10 +265,10 @@ static func get_mod_loader_hook(
 
 	return """
 {%STATIC%}func {%METHOD_NAME%}({%METHOD_PARAMS%}){%RETURN_TYPE_STRING%}:
-	if ModLoaderStore.any_mod_hooked:
+	if ModLoaderStore.get("any_mod_hooked") and ModLoaderStore.any_mod_hooked:
 		ModLoaderMod.call_hooks({%SELF%}, [{%METHOD_ARGS%}], {%HOOK_ID_BEFORE%})
 	{%METHOD_RETURN_VAR%}{%METHOD_PREFIX%}_{%METHOD_NAME%}({%METHOD_ARGS%})
-	if ModLoaderStore.any_mod_hooked:
+	if ModLoaderStore.get("any_mod_hooked") and ModLoaderStore.any_mod_hooked:
 		ModLoaderMod.call_hooks({%SELF%}, [{%METHOD_ARGS%}], {%HOOK_ID_AFTER%})
 	{%METHOD_RETURN%}""".format({
 		"%METHOD_PREFIX%": method_prefix,
@@ -319,7 +355,7 @@ static func get_return_type_string(return_data: Dictionary) -> String:
 	return "%s%s" % [type_base, type_hint]
 
 
-static func collect_getters_and_setters(text: String) -> Dictionary:
+static func collect_getters_and_setters(text: String, regex_getter_setter: RegEx) -> Dictionary:
 	var result := {}
 	# a valid match has 2 or 4 groups, split into the method names and the rest of the line
 	# (var example: set = )(example_setter)(, get = )(example_getter)
