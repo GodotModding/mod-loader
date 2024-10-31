@@ -350,7 +350,7 @@ static func get_return_type_string(return_data: Dictionary) -> String:
 	else:
 		type_base = type_string(return_data.type)
 
-	var type_hint := "" if return_data.hint_string.is_empty() else ("[%s]" % return_data.hint_string)
+	var type_hint: String = "" if return_data.hint_string.is_empty() else ("[%s]" % return_data.hint_string)
 
 	return "%s%s" % [type_base, type_hint]
 
