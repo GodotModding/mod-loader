@@ -99,9 +99,13 @@ func _ready():
 
 	# Hooks must be generated after all autoloads are available.
 	# Variables initialized with an autoload property otherwise causes errors.
-	if not OS.has_feature("editor") and ModLoaderStore.any_mod_hooked:
-		# Generate mod hooks
-		_ModLoaderModHookPacker.start()
+	if ModLoaderStore.any_mod_hooked:
+		if OS.has_feature("editor"):
+			ModLoaderLog.warning("No mod hooks .pck will be created when running from the editor.", LOG_NAME)
+			ModLoaderLog.info("You can test mod hooks by running the preprocessor on the vanilla scripts once.", LOG_NAME)
+		else:
+			# Generate mod hooks
+			_ModLoaderModHookPacker.start()
 
 
 func _exit_tree() -> void:

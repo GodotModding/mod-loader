@@ -9,19 +9,19 @@ extends Resource
 @export_dir var override_path_to_mods = ""
 @export_dir var override_path_to_configs = ""
 @export_dir var override_path_to_workshop = ""
-@export_category("Logging")
+@export_group("Logging")
 @export var log_level := ModLoaderLog.VERBOSITY_LEVEL.DEBUG
 @export var ignore_deprecated_errors: bool = false
 @export var ignored_mod_names_in_log: Array[String] = []
-@export_category("Game Data")
+@export_group("Game Data")
 @export var steam_id: int = 0
 @export var semantic_version := "0.0.0"
-@export_category("Mod Sources")
+@export_group("Mod Sources")
 ## Indicates whether to load mods from the Steam Workshop directory, or the overridden workshop path.
 @export var load_from_steam_workshop: bool = false
 ## Indicates whether to load mods from the "mods" folder located at the game's install directory, or the overridden mods path.
 @export var load_from_local: bool = true
-@export_category("Mod Hooks")
+@export_group("Mod Hooks")
 ## Can be used to override the default hook pack path, the hook pack is located inside the game's install directory by default.
 ## To override the path specify a new absolute path.
 @export_global_dir var override_path_to_hook_pack := ""

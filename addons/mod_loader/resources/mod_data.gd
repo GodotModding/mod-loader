@@ -133,7 +133,9 @@ func validate_game_version_compatibility(game_semver: String) -> void:
 		valid_minor = true
 
 	if not valid_major:
-		load_errors.append("This mod is incompatible with the current game version.")
+		load_errors.append("This mod is incompatible with the current game version. (Current: %s, Compatible: %s)"
+			% [game_semver, ", ".join(manifest.compatible_game_version)]
+		)
 	if not valid_minor:
 		load_warnings.append("This mod may not be compatible with the current game version. Enable at your own risk.")
 
