@@ -77,7 +77,7 @@ func _init(mod_id: String, _zip_path := "") -> void:
 	dir_name = mod_id
 
 	var mod_overwrites_path := get_optional_mod_file_path(ModData.optional_mod_files.OVERWRITES)
-	is_overwrite = _ModLoaderFile.file_exists(mod_overwrites_path)
+	is_overwrite = _ModLoaderFile.file_exists(mod_overwrites_path, zip_path)
 	is_locked = mod_id in ModLoaderStore.ml_options.locked_mods
 
 	# Get the mod file paths
@@ -243,7 +243,7 @@ func _has_manifest(mod_manifest: ModManifest) -> bool:
 
 
 # Converts enum indices [member required_mod_files] into their respective file paths
-func get_required_mod_file_path(required_file: int) -> String:
+func get_required_mod_file_path(required_file: required_mod_files) -> String:
 	match required_file:
 		required_mod_files.MOD_MAIN:
 			return dir_path.path_join("mod_main.gd")
@@ -252,7 +252,7 @@ func get_required_mod_file_path(required_file: int) -> String:
 	return ""
 
 
-func get_optional_mod_file_path(optional_file: int) -> String:
+func get_optional_mod_file_path(optional_file: optional_mod_files) -> String:
 	match optional_file:
 		optional_mod_files.OVERWRITES:
 			return dir_path.path_join("overwrites.gd")

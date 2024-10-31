@@ -193,12 +193,29 @@ static func remove_file(file_path: String) -> bool:
 # Checks
 # =============================================================================
 
-static func file_exists(path: String) -> bool:
+static func file_exists(path: String, zip_path: String = "") -> bool:
+	if not zip_path.is_empty():
+		return zip_file_exists(path, zip_path)
+
 	return FileAccess.file_exists(path)
 
 
 static func dir_exists(path: String) -> bool:
 	return DirAccess.dir_exists_absolute(path)
+
+
+static func zip_file_exists(path: String, zip_path: String = "") -> bool:
+	var reader := zip_reader_open(zip_path)
+	return reader.file_exists(path.trim_prefix("res://"))
+
+
+static func zip_reader_open(zip_path) -> ZIPReader:
+	var reader := ZIPReader.new()
+	var err := reader.open(zip_path)
+	if err != OK:
+		ModLoaderLog.error("Could not open zip with error: %s" % error_string(err), LOG_NAME)
+		return
+	return reader
 
 
 # Internal util functions
