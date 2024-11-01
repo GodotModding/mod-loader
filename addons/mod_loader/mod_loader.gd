@@ -101,7 +101,7 @@ func _ready():
 	# Variables initialized with an autoload property otherwise causes errors.
 	if ModLoaderStore.any_mod_hooked:
 		if OS.has_feature("editor"):
-			ModLoaderLog.warning("No mod hooks .pck will be created when running from the editor.", LOG_NAME)
+			ModLoaderLog.warning("No mod hooks .zip will be created when running from the editor.", LOG_NAME)
 			ModLoaderLog.info("You can test mod hooks by running the preprocessor on the vanilla scripts once.", LOG_NAME)
 		else:
 			# Generate mod hooks
