@@ -16,6 +16,8 @@ static func get_local_folder_dir(subfolder: String = "") -> String:
 
 	if OS.get_name() == "macOS":
 		game_install_directory = game_install_directory.get_base_dir().get_base_dir()
+		if game_install_directory.ends_with(".app"):
+			game_install_directory = game_install_directory.get_base_dir()
 
 	# Fix for running the game through the Godot editor (as the EXE path would be
 	# the editor's own EXE, which won't have any mod ZIPs)
