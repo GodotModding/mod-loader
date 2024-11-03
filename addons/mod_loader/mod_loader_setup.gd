@@ -70,6 +70,11 @@ const new_global_classes := [
 		"class": "ModLoaderLog",
 		"language": "GDScript",
 		"path": "res://addons/mod_loader/api/log.gd"
+	}, {
+		"base": "Object",
+		"class": "_ModLoaderHooks",
+		"language": "GDScript",
+		"path": "res://addons/mod_loader/internal/hooks.gd"
 	}
 ]
 

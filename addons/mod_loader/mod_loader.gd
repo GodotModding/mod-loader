@@ -287,6 +287,12 @@ static func _load_mod_zips(zip_paths: Array[String]) -> int:
 	for mod_zip_global_path in zip_paths:
 		var is_mod_loaded_successfully := ProjectSettings.load_resource_pack(mod_zip_global_path, false)
 
+		# Report the loading status
+		var mod_zip_file_name := mod_zip_global_path.get_file()
+		if not is_mod_loaded_successfully:
+			ModLoaderLog.error("%s failed to load." % mod_zip_file_name, LOG_NAME)
+			continue
+
 		# Get the current directories inside UNPACKED_DIR
 		# This array is used to determine which directory is new
 		var current_mod_dirs := _ModLoaderPath.get_dir_paths_in_dir(_ModLoaderPath.get_unpacked_mods_dir_path())
@@ -307,7 +313,6 @@ static func _load_mod_zips(zip_paths: Array[String]) -> int:
 			)
 			continue
 
-
 		# Update previous_mod_dirs in ModLoaderStore to use for the next mod
 		ModLoaderStore.previous_mod_dirs = current_mod_dirs_backup
 
@@ -325,11 +330,6 @@ static func _load_mod_zips(zip_paths: Array[String]) -> int:
 				"Please unpack your mod ZIPs instead, and add them to ", _ModLoaderPath.get_unpacked_mods_dir_path()), LOG_NAME)
 			ModLoaderStore.has_shown_editor_zips_warning = true
 
-		# Report the loading status
-		var mod_zip_file_name := mod_zip_global_path.get_file()
-		if not is_mod_loaded_successfully:
-			ModLoaderLog.error("%s failed to load." % mod_zip_file_name, LOG_NAME)
-			continue
 
 		ModLoaderLog.success("%s loaded." % mod_zip_file_name, LOG_NAME)
 		loaded_count += 1
