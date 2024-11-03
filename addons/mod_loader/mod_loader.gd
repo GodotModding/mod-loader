@@ -98,7 +98,7 @@ func _ready():
 	var _success_update_mod_lists := ModLoaderUserProfile._update_mod_lists()
 
 	# Hooks must be generated after all autoloads are available.
-	# Variables initialized with an autoload property otherwise causes errors.
+	# Variables initialized with an autoload property cause errors otherwise.
 	if ModLoaderStore.any_mod_hooked:
 		if OS.has_feature("editor"):
 			ModLoaderLog.warning("No mod hooks .zip will be created when running from the editor.", LOG_NAME)

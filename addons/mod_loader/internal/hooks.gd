@@ -10,7 +10,9 @@ static func add_hook(mod_callable: Callable, script_path: String, method_name: S
 	if not ModLoaderStore.modding_hooks.has(hash):
 		ModLoaderStore.modding_hooks[hash] = []
 	ModLoaderStore.modding_hooks[hash].push_back(mod_callable)
-	ModLoaderLog.debug("Added hook script: \"%s\" method: \"%s\" is_before: \"%s\"" % [script_path, method_name, is_before], LOG_NAME)
+	ModLoaderLog.debug("Added hook script: \"%s\" %s method: \"%s\""
+		% [script_path, "before" if is_before else "after", method_name ], LOG_NAME
+	)
 	if not ModLoaderStore.hooked_script_paths.has(script_path):
 		ModLoaderStore.hooked_script_paths[script_path] = null
 

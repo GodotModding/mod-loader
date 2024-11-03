@@ -57,11 +57,11 @@ func process_script(path: String) -> String:
 			if getters_setters.has(method.name):
 				return false
 
-			var method_first_line_start := get_index_at_method_start(method.name, source_code)
+			var method_first_line_start := _ModLoaderModHookPreProcessor.get_index_at_method_start(method.name, source_code)
 			if method_first_line_start == -1:
 				return false
 
-			if not is_func_marked_moddable(method_first_line_start, source_code):
+			if not _ModLoaderModHookPreProcessor.is_func_marked_moddable(method_first_line_start, source_code):
 				return false
 
 			return true
