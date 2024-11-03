@@ -1,6 +1,7 @@
 class_name ModLoaderOptionsProfile
 extends Resource
 
+
 ## Can be used to disable mods for specific plaforms by using feature overrides
 @export var enable_mods: bool = true
 ## List of mod ids that can't be turned on or off

@@ -12,6 +12,10 @@ const MOD_CONFIG_DIR_PATH := "user://configs"
 # Get the path to a local folder. Primarily used to get the  (packed) mods
 # folder, ie "res://mods" or the OS's equivalent, as well as the configs path
 static func get_local_folder_dir(subfolder: String = "") -> String:
+	return get_game_install_dir().path_join(subfolder)
+
+
+static func get_game_install_dir() -> String:
 	var game_install_directory := OS.get_executable_path().get_base_dir()
 
 	if OS.get_name() == "macOS":
@@ -25,7 +29,7 @@ static func get_local_folder_dir(subfolder: String = "") -> String:
 	if OS.has_feature("editor"):
 		game_install_directory = "res://"
 
-	return game_install_directory.path_join(subfolder)
+	return game_install_directory
 
 
 # Get the path where override.cfg will be stored.
@@ -189,23 +193,21 @@ static func get_path_to_mod_configs_dir(mod_id: String) -> String:
 # Get the path to a mods config file
 static func get_path_to_mod_config_file(mod_id: String, config_name: String) -> String:
 	var mod_config_dir := get_path_to_mod_configs_dir(mod_id)
-
-
 	return mod_config_dir.path_join(config_name + ".json")
 
 
-# Get the path to the mod hook pack
+# Get the path to the zip file that contains the vanilla scripts with
+# added mod hooks, considering all overrides
 static func get_path_to_hook_pack() -> String:
-	if ModLoaderStore.ml_options.override_path_to_hook_pack.is_empty():
-		if ModLoaderStore.ml_options.override_hook_pack_name.is_empty():
-			return OS.get_executable_path().get_base_dir().path_join(ModLoaderStore.MOD_HOOK_PACK_NAME)
-		else:
-			return OS.get_executable_path().get_base_dir().path_join(ModLoaderStore.ml_options.override_hook_pack_name)
-	else:
-		if ModLoaderStore.ml_options.override_hook_pack_name.is_empty():
-			return ModLoaderStore.ml_options.override_path_to_hook_pack.path_join(ModLoaderStore.MOD_HOOK_PACK_NAME)
-		else:
-			return ModLoaderStore.ml_options.override_path_to_hook_pack.path_join(ModLoaderStore.ml_options.override_hook_pack_name)
+	var path := get_game_install_dir()
+	if not ModLoaderStore.ml_options.override_path_to_hook_pack.is_empty():
+		path = ModLoaderStore.ml_options.override_path_to_hook_pack
+
+	var name := ModLoaderStore.MOD_HOOK_PACK_NAME
+	if not ModLoaderStore.ml_options.override_hook_pack_name.is_empty():
+		name = ModLoaderStore.ml_options.override_hook_pack_name
+
+	return path.path_join(name)
 
 
 # Returns the mod directory name ("some-mod") from a given path (e.g. "res://mods-unpacked/some-mod/extensions/extension.gd")
