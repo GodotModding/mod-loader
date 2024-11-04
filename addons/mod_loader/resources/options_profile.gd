@@ -24,7 +24,10 @@ extends Resource
 
 @export_group("Game Data")
 ## Steam app id, can be found in the steam page url
-@export var steam_id: int = 0
+@export var steam_id: int = 0:
+	get:
+		return steam_id
+
 ## Semantic game version. [br]
 ## Replace the getter in options_profile.gd if your game stores the version somewhere else
 @export var semantic_version := "0.0.0":
