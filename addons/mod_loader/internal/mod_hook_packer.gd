@@ -9,7 +9,7 @@ const LOG_NAME := "ModLoader:ModHookPacker"
 
 
 static func start() -> void:
-	ModLoaderLog.info("Generating mod hooks .pck", LOG_NAME)
+	ModLoaderLog.info("Generating mod hooks .zip", LOG_NAME)
 	var hook_pre_processor = _ModLoaderModHookPreProcessor.new()
 	hook_pre_processor.process_begin()
 
