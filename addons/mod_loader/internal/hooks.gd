@@ -1,6 +1,10 @@
 class_name _ModLoaderHooks
 extends Object
 
+# This Class provides utility functions for working with Mod Hooks.
+# Currently all of the included functions are internal and should only be used by the mod loader itself.
+# Functions with external use are exposed through the ModLoaderMod class.
+
 const LOG_NAME := "ModLoader:Hooks"
 
 
