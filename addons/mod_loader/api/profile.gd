@@ -25,13 +25,13 @@ static func enable_mod(mod_id: String, user_profile:= ModLoaderStore.current_use
 	return _set_mod_state(mod_id, user_profile.name, true)
 
 
-## Forces enabling a mod - it will be loaded on the next game start even if load warnigns are present[br]
+## Forces a mod to enable, ensuring it loads at the next game start, regardless of load warnings.[br]
 ## [br]
 ## [b]Parameters:[/b][br]
 ## - [code]mod_id[/code] ([String]): The ID of the mod to enable.[br]
-## - [code]user_profile[/code] ([ModUserProfile]): (Optional) The user profile to enable the mod for. Default is the current user profile.[br]
+## - [code]user_profile[/code] ([ModUserProfile]): (Optional) The user profile for which the mod will be enabled. Defaults to the current user profile.[br]
 ## [br]
-## [b]Returns:[/b] [bool]
+## [b]Returns:[/b] [bool]: True if the mod is successfully set to enable, False otherwise.
 static func force_enable_mod(mod_id: String, user_profile:= ModLoaderStore.current_user_profile) -> bool:
 	return _set_mod_state(mod_id, user_profile.name, true, true)
 
