@@ -168,21 +168,21 @@ static func get_function_parameters(method_name: String, text: String, is_static
 
 
 static func get_closing_paren_index(opening_paren_index: int, text: String) -> int:
-	# Use a stack to match parentheses
-	var stack := []
+	# Use a stack counter to match parentheses
+	var stack := 0
 	var closing_paren_index := opening_paren_index
 	while closing_paren_index < text.length():
 		var char := text[closing_paren_index]
 		if char == '(':
-			stack.push_back('(')
+			stack += 1
 		elif char == ')':
-			stack.pop_back()
-			if stack.size() == 0:
+			stack -= 1
+			if stack == 0:
 				break
 		closing_paren_index += 1
 
 	# If the stack is not empty, that means there's no matching closing parenthesis
-	if stack.size() != 0:
+	if stack != 0:
 		return -1
 
 	return closing_paren_index
@@ -222,6 +222,8 @@ static func edit_vanilla_method(
 
 static func fix_method_super(method_name: String, func_def_end: int, text: String, regex_func_body: RegEx, regex_super_call: RegEx, offset := 0) -> String:
 	var closing_paren_index := get_closing_paren_index(func_def_end, text)
+	if closing_paren_index == -1:
+		return text
 	var func_body_start_index := text.find(":", closing_paren_index) +1
 
 	var func_body := regex_func_body.search(text, func_body_start_index)
