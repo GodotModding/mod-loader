@@ -53,18 +53,7 @@ func process_script(path: String) -> String:
 	var getters_setters := collect_getters_and_setters(source_code, regex_getter_setter)
 
 	var moddable_methods := current_script.get_script_method_list().filter(
-		func is_func_moddable(method: Dictionary):
-			if getters_setters.has(method.name):
-				return false
-
-			var method_first_line_start := _ModLoaderModHookPreProcessor.get_index_at_method_start(method.name, source_code)
-			if method_first_line_start == -1:
-				return false
-
-			if not _ModLoaderModHookPreProcessor.is_func_marked_moddable(method_first_line_start, source_code):
-				return false
-
-			return true
+		is_func_moddable.bind(source_code, getters_setters)
 	)
 
 	for method in moddable_methods:
@@ -123,6 +112,20 @@ func process_script(path: String) -> String:
 	ModLoaderLog.debug("Finished processing script at path: %s in %s ms" % [path, Time.get_ticks_msec() - start_time], LOG_NAME)
 
 	return source_code
+
+
+static func is_func_moddable(method: Dictionary, source_code: String, getters_setters := {}) -> bool:
+	if getters_setters.has(method.name):
+		return false
+
+	var method_first_line_start := _ModLoaderModHookPreProcessor.get_index_at_method_start(method.name, source_code)
+	if method_first_line_start == -1:
+		return false
+
+	if not _ModLoaderModHookPreProcessor.is_func_marked_moddable(method_first_line_start, source_code):
+		return false
+
+	return true
 
 
 static func get_function_arg_name_string(args: Array) -> String:
