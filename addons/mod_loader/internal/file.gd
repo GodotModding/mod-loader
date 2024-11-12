@@ -117,12 +117,11 @@ static func get_zip_paths_in(folder_path: String) -> Array[String]:
 			return file_name.get_extension() == "zip"
 	).map(
 		func(file_name: String):
-			var global_path := ProjectSettings.globalize_path(folder_path.path_join(file_name))
-			ModLoaderLog.debug("Found mod ZIP: %s" % global_path, LOG_NAME)
-			return global_path
+			return ProjectSettings.globalize_path(folder_path.path_join(file_name))
 	)
+	ModLoaderLog.debug("Found mod ZIPs: %s" % files, LOG_NAME)
 
-	# only assign casts to the nested Array type we want to return
+	# only .assign()ing to a typed array lets us return Array[String] instead of just Array
 	zip_paths.assign(files)
 	return zip_paths
 
@@ -206,6 +205,8 @@ static func dir_exists(path: String) -> bool:
 
 static func file_exists_in_zip(path: String, zip_path: String = "") -> bool:
 	var reader := zip_reader_open(zip_path)
+	if not reader:
+		return false
 	return reader.file_exists(path.trim_prefix("res://"))
 
 
