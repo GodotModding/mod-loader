@@ -18,7 +18,7 @@ static func add_hook(mod_callable: Callable, script_path: String, method_name: S
 		% [script_path, "before" if is_before else "after", method_name ], LOG_NAME
 	)
 	if not ModLoaderStore.hooked_script_paths.has(script_path):
-		ModLoaderStore.hooked_script_paths[script_path] = null
+		ModLoaderStore.hooked_script_paths[script_path] = true
 
 
 static func call_hooks(self_object: Object, args: Array, hook_hash:int) -> void:

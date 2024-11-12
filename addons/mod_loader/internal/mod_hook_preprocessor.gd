@@ -365,10 +365,10 @@ static func collect_getters_and_setters(text: String, regex_getter_setter: RegEx
 	for mat in regex_getter_setter.search_all(text):
 		if mat.get_string(1).is_empty() or mat.get_string(1).contains("#"):
 			continue
-		result[mat.get_string(2)] = null
+		result[mat.get_string(2)] = true
 
 		if mat.get_string(3).is_empty() or mat.get_string(3).contains("#"):
 			continue
-		result[mat.get_string(4)] = null
+		result[mat.get_string(4)] = true
 
 	return result

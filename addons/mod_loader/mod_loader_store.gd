@@ -45,7 +45,7 @@ var modding_hooks := {}
 
 # Example:
 # var hooked_script_paths := {
-# 	"res://game/game.gd": null,
+# 	"res://game/game.gd": true,
 # }
 var hooked_script_paths := {}
 
