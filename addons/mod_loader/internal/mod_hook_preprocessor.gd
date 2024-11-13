@@ -224,7 +224,7 @@ static func edit_vanilla_method(
 
 
 static func fix_method_super(method_name: String, func_def_end: int, text: String, regex_func_body: RegEx, regex_super_call: RegEx, offset := 0) -> String:
-	var closing_paren_index := get_closing_paren_index(func_def_end, text)
+	var closing_paren_index := get_closing_paren_index(func_def_end - 1, text)
 	if closing_paren_index == -1:
 		return text
 	var func_body_start_index := text.find(":", closing_paren_index) +1
