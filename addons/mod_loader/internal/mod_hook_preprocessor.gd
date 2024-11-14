@@ -67,7 +67,7 @@ func process_script(path: String, enable_hook_check := false) -> String:
 
 		var hash_before := _ModLoaderHooks.get_hook_hash(path, method.name, true)
 		var hash_after := _ModLoaderHooks.get_hook_hash(path, method.name, false)
-		var hash_before_data := [path, method.name,true]
+		var hash_before_data := [path, method.name, true]
 		var hash_after_data := [path, method.name, false]
 		if hashmap.has(hash_before):
 			push_error(HASH_COLLISION_ERROR%[hashmap[hash_before], hash_before_data])
