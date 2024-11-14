@@ -152,7 +152,9 @@ static func get_function_parameters(method_name: String, text: String, is_static
 	if not is_top_level_func(text, result.get_start(), is_static):
 		return get_function_parameters(method_name, text, is_static, result.get_end())
 
-	var closing_paren_index := get_closing_paren_index(opening_paren_index, text)
+	# Shift the func_def_end index back by one to start on the opening parentheses.
+	# Because the match_func_with_whitespace().get_end() is the index after the opening parentheses.
+	var closing_paren_index := get_closing_paren_index(opening_paren_index - 1, text)
 	if closing_paren_index == -1:
 		return ""
 
@@ -224,6 +226,8 @@ static func edit_vanilla_method(
 
 
 static func fix_method_super(method_name: String, func_def_end: int, text: String, regex_func_body: RegEx, regex_super_call: RegEx, offset := 0) -> String:
+	# Shift the func_def_end index back by one to start on the opening parentheses.
+	# Because the match_func_with_whitespace().get_end() is the index after the opening parentheses.
 	var closing_paren_index := get_closing_paren_index(func_def_end - 1, text)
 	if closing_paren_index == -1:
 		return text
