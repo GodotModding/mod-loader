@@ -36,7 +36,7 @@ func process_begin() -> void:
 	hashmap.clear()
 
 
-func process_script(path: String) -> String:
+func process_script(path: String, enable_hook_check := false) -> String:
 	var start_time := Time.get_ticks_msec()
 	ModLoaderLog.debug("Start processing script at path: %s" % path, LOG_NAME)
 	var current_script := load(path) as GDScript
