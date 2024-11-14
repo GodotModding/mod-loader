@@ -22,6 +22,6 @@ func _export_file(path: String, type: String, features: PackedStringArray) -> vo
 	skip()
 	add_file(
 		path,
-		hook_pre_processor.process_script(path).to_utf8_buffer(),
+		hook_pre_processor.process_script_verbose(path).to_utf8_buffer(),
 		false
 	)

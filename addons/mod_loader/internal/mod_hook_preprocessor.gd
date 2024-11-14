@@ -36,9 +36,15 @@ func process_begin() -> void:
 	hashmap.clear()
 
 
-func process_script(path: String) -> String:
+func process_script_verbose(path: String, enable_hook_check := false) -> String:
 	var start_time := Time.get_ticks_msec()
 	ModLoaderLog.debug("Start processing script at path: %s" % path, LOG_NAME)
+	var processed := process_script(path, enable_hook_check)
+	ModLoaderLog.debug("Finished processing script at path: %s in %s ms" % [path, Time.get_ticks_msec() - start_time], LOG_NAME)
+	return processed
+
+
+func process_script(path: String, enable_hook_check := false) -> String:
 	var current_script := load(path) as GDScript
 
 	var source_code := current_script.source_code
@@ -108,8 +114,6 @@ func process_script(path: String) -> String:
 	#if we have some additions to the code, append them at the end
 	if source_code_additions != "":
 		source_code = "%s\n%s\n%s" % [source_code, MOD_LOADER_HOOKS_START_STRING, source_code_additions]
-
-	ModLoaderLog.debug("Finished processing script at path: %s in %s ms" % [path, Time.get_ticks_msec() - start_time], LOG_NAME)
 
 	return source_code
 
