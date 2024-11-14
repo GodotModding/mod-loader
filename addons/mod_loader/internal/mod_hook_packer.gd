@@ -48,7 +48,7 @@ static func start() -> void:
 		if path in script_paths_with_hook:
 			continue
 
-		var processed_source_code := hook_pre_processor.process_script(path)
+		var processed_source_code := hook_pre_processor.process_script_verbose(path)
 
 		zip_writer.start_file(path.trim_prefix("res://"))
 		zip_writer.write_file(processed_source_code.to_utf8_buffer())
