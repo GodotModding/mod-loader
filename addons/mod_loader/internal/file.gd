@@ -119,7 +119,7 @@ static func get_zip_paths_in(folder_path: String) -> Array[String]:
 		func(file_name: String):
 			return ProjectSettings.globalize_path(folder_path.path_join(file_name))
 	)
-	ModLoaderLog.debug("Found mod ZIPs: %s" % files, LOG_NAME)
+	ModLoaderLog.debug("Found mod %s ZIPs: %s" % [files.size(), str(files)], LOG_NAME)
 
 	# only .assign()ing to a typed array lets us return Array[String] instead of just Array
 	zip_paths.assign(files)
