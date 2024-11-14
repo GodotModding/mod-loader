@@ -273,25 +273,25 @@ static func get_mod_loader_hook(
 	var method_return := "return %s" % "return_var" if not method_type.is_empty() or return_prop_usage == 131072 else ""
 
 	return """
-{%STATIC%}func {%METHOD_NAME%}({%METHOD_PARAMS%}){%RETURN_TYPE_STRING%}:
+{STATIC}func {METHOD_NAME}({METHOD_PARAMS}){RETURN_TYPE_STRING}:
 	if ModLoaderStore.get("any_mod_hooked") and ModLoaderStore.any_mod_hooked:
-		_ModLoaderHooks.call_hooks({%SELF%}, [{%METHOD_ARGS%}], {%HOOK_ID_BEFORE%})
-	{%METHOD_RETURN_VAR%}{%METHOD_PREFIX%}_{%METHOD_NAME%}({%METHOD_ARGS%})
+		_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_BEFORE})
+	{METHOD_RETURN_VAR}{METHOD_PREFIX}_{METHOD_NAME}({METHOD_ARGS})
 	if ModLoaderStore.get("any_mod_hooked") and ModLoaderStore.any_mod_hooked:
-		_ModLoaderHooks.call_hooks({%SELF%}, [{%METHOD_ARGS%}], {%HOOK_ID_AFTER%})
-	{%METHOD_RETURN%}""".format({
-		"%METHOD_PREFIX%": method_prefix,
-		"%METHOD_NAME%": method_name,
-		"%METHOD_PARAMS%": method_arg_string_with_defaults_and_types,
-		"%RETURN_TYPE_STRING%": type_string,
-		"%METHOD_ARGS%": method_arg_string_names_only,
-		"%SCRIPT_PATH%": script_path,
-		"%METHOD_RETURN_VAR%": return_var,
-		"%METHOD_RETURN%": method_return,
-		"%STATIC%": static_string,
-		"%SELF%": self_string,
-		"%HOOK_ID_BEFORE%" : hash_before,
-		"%HOOK_ID_AFTER%" : hash_after,
+		_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_AFTER})
+	{METHOD_RETURN}""".format({
+		"METHOD_PREFIX": method_prefix,
+		"METHOD_NAME": method_name,
+		"METHOD_PARAMS": method_arg_string_with_defaults_and_types,
+		"RETURN_TYPE_STRING": type_string,
+		"METHOD_ARGS": method_arg_string_names_only,
+		"SCRIPT_PATH": script_path,
+		"METHOD_RETURN_VAR": return_var,
+		"METHOD_RETURN": method_return,
+		"STATIC": static_string,
+		"SELF": self_string,
+		"HOOK_ID_BEFORE" : hash_before,
+		"HOOK_ID_AFTER" : hash_after,
 	})
 
 
