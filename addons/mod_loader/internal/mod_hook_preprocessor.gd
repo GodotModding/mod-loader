@@ -68,7 +68,7 @@ func process_script(path: String) -> String:
 		var hash_before := _ModLoaderHooks.get_hook_hash(path, method.name, true)
 		var hash_after := _ModLoaderHooks.get_hook_hash(path, method.name, false)
 		var hash_before_data := [path, method.name,true]
-		var hash_after_data := [path, method.name,false]
+		var hash_after_data := [path, method.name, false]
 		if hashmap.has(hash_before):
 			push_error(HASH_COLLISION_ERROR%[hashmap[hash_before], hash_before_data])
 		if hashmap.has(hash_after):
@@ -87,6 +87,7 @@ func process_script(path: String) -> String:
 			hash_before,
 			hash_after,
 			METHOD_PREFIX + class_prefix,
+			enable_hook_check
 		)
 
 		# Store the method name
@@ -261,9 +262,10 @@ static func get_mod_loader_hook(
 	return_prop_usage: int,
 	is_static: bool,
 	script_path: String,
-	hash_before:int,
-	hash_after:int,
-	method_prefix := METHOD_PREFIX
+	hash_before: int,
+	hash_after: int,
+	method_prefix := METHOD_PREFIX,
+	enable_hook_check := false,
 ) -> String:
 	var type_string := " -> %s" % method_type if not method_type.is_empty() else ""
 	var static_string := "static " if is_static else ""
@@ -271,14 +273,13 @@ static func get_mod_loader_hook(
 	var self_string := "null" if is_static else "self"
 	var return_var := "var %s = " % "return_var" if not method_type.is_empty() or return_prop_usage == 131072 else ""
 	var method_return := "return %s" % "return_var" if not method_type.is_empty() or return_prop_usage == 131072 else ""
+	var hook_check := 'if ModLoaderStore.get("any_mod_hooked") and ModLoaderStore.any_mod_hooked:\n\t\t' if enable_hook_check else ""
 
 	return """
 {STATIC}func {METHOD_NAME}({METHOD_PARAMS}){RETURN_TYPE_STRING}:
-	if ModLoaderStore.get("any_mod_hooked") and ModLoaderStore.any_mod_hooked:
-		_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_BEFORE})
+	{HOOKS_CHECK}_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_BEFORE})
 	{METHOD_RETURN_VAR}{METHOD_PREFIX}_{METHOD_NAME}({METHOD_ARGS})
-	if ModLoaderStore.get("any_mod_hooked") and ModLoaderStore.any_mod_hooked:
-		_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_AFTER})
+	{HOOK_CHECK}_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_AFTER})
 	{METHOD_RETURN}""".format({
 		"METHOD_PREFIX": method_prefix,
 		"METHOD_NAME": method_name,
@@ -290,8 +291,9 @@ static func get_mod_loader_hook(
 		"METHOD_RETURN": method_return,
 		"STATIC": static_string,
 		"SELF": self_string,
-		"HOOK_ID_BEFORE" : hash_before,
-		"HOOK_ID_AFTER" : hash_after,
+		"HOOK_ID_BEFORE": hash_before,
+		"HOOK_ID_AFTER": hash_after,
+		"HOOK_CHECK": hook_check,
 	})
 
 
