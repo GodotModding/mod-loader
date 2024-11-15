@@ -19,11 +19,9 @@ inputs:
     type: string
     required: true
 
-
 runs:
   using: composite
   steps:
-
     - name: "Set Cache Name"
       shell: bash
       run: |

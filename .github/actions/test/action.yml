@@ -39,7 +39,7 @@ runs:
         chmod 770 ${{ inputs.gut-download-path }}
 
         wget https://github.com/bitwes/Gut/archive/refs/tags/v9.3.0.zip -P ${{ inputs.gut-download-path }}
-        unzip ${{ inputs.gut-download-path }}/v7.4.1.zip -d ${{ inputs.gut-download-path }}/unzip
+        unzip ${{ inputs.gut-download-path }}/v9.3.0.zip -d ${{ inputs.gut-download-path }}/unzip
 
     - name: "GUT Cache Save"
       if: steps.gut-restore-cache.outputs.cache-hit != 'true'

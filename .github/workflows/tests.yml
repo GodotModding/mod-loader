@@ -9,18 +9,18 @@ on:
       os:
         required: false
         type: string
-        default: 'ubuntu-22.04'
+        default: "ubuntu-22.04"
       godot-version:
         required: true
         type: string
-        default: '4.3.0'
+        default: "4.3"
 
   workflow_dispatch:
     inputs:
       os:
         required: false
         type: string
-        default: 'ubuntu-22.04'
+        default: "ubuntu-22.04"
       godot-version:
         required: true
         type: string
@@ -40,15 +40,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
-          submodules: 'recursive'
+          submodules: "recursive"
 
       - name: "🤖 Install Godot ${{ inputs.godot-version }}"
         uses: ./.github/actions/godot-install
         with:
           godot-version: ${{ inputs.godot-version }}
-          godot-status-version: 'stable'
-          godot-bin-name: 'linux_headless.64'
-          godot-cache-path: '~/godot-linux'
+          godot-status-version: "stable"
+          godot-bin-name: "linux.x86_64"
+          godot-cache-path: "~/godot-linux"
 
       - name: "🧪 Run Tests"
         if: ${{ !cancelled() }}

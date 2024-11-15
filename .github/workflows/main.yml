@@ -31,7 +31,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   tests:
-    name: "Running GUT tests on Godot 4.3.0"
+    name: "Running GUT tests on Godot 4.3"
     uses: ./.github/workflows/tests.yml
     with:
-      godot-version: "4.3.0"
+      godot-version: "4.3"
