@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://dkea2wjvdowwf"]
+
+[node name="TestRunner" type="Control"]
+custom_minimum_size = Vector2(740, 250)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 740.0
+offset_bottom = 250.0
