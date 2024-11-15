@@ -21,7 +21,7 @@ runs:
     - name: "Set Cache Name"
       shell: bash
       run: |
-        echo "CACHE_NAME_GUT=GUT_v7.4.1" >> "$GITHUB_ENV"
+        echo "CACHE_NAME_GUT=GUT_v9.3.0" >> "$GITHUB_ENV"
 
     - name: "GUT Cache Restore"
       uses: actions/cache/restore@v3
@@ -56,7 +56,7 @@ runs:
     - name: "⚔ Link GUT"
       if: ${{ !cancelled() }}
       shell: bash
-      run: ln -s ${{ inputs.gut-download-path }}/unzip/Gut-7.4.1/addons/gut ${{ github.workspace }}/test/addons/gut
+      run: ln -s ${{ inputs.gut-download-path }}/unzip/Gut-9.3.0/addons/gut ${{ github.workspace }}/test/addons/gut
 
     - name: "⚔ Link Mod Loader"
       if: ${{ !cancelled() }}
