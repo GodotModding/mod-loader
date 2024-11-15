@@ -21,11 +21,13 @@ static func add_hook(mod_callable: Callable, script_path: String, method_name: S
 		ModLoaderStore.hooked_script_paths[script_path] = true
 
 
-static func call_hooks(self_object: Object, args: Array, hook_hash:int) -> void:
+static func call_hooks(self_object: Object, args: Array, hook_hash: int) -> void:
 	var hooks = ModLoaderStore.modding_hooks.get(hook_hash, null)
-	if hooks:
-		for mod_func: Callable in hooks:
-			mod_func.bind(self_object).callv(args)
+	if not hooks:
+		return
+
+	for mod_func: Callable in hooks:
+		mod_func.callv([self_object] + args)
 
 
 static func get_hook_hash(path:String, method:String, is_before:bool) -> int:

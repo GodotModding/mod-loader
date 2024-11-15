@@ -281,7 +281,7 @@ static func get_mod_loader_hook(
 
 	return """
 {STATIC}func {METHOD_NAME}({METHOD_PARAMS}){RETURN_TYPE_STRING}:
-	{HOOKS_CHECK}_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_BEFORE})
+	{HOOK_CHECK}_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_BEFORE})
 	{METHOD_RETURN_VAR}{METHOD_PREFIX}_{METHOD_NAME}({METHOD_ARGS})
 	{HOOK_CHECK}_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_AFTER})
 	{METHOD_RETURN}""".format({
