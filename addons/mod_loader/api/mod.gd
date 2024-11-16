@@ -58,7 +58,7 @@ static func install_script_extension(child_script_path: String) -> void:
 ## [br][b]Returns:[/b] [code]void[/code][br][br]
 ##
 ## The [param mod_callable] is just a function that will be executed when the vanilla method is executed. [br]
-## It receives a [ModLoaderHookPass] object to pass data around between hook methods. [br]
+## It receives a [ModLoaderHookLinkage] object to pass data around between hook methods. [br]
 ## This allows manipulating parameters before and return values after the vanilla method is called. [br]
 ##
 ## [br]
@@ -80,21 +80,21 @@ static func install_script_extension(child_script_path: String) -> void:
 ##     ModLoaderMod.add_hook(add_season, "res://tools/utilities.gd", "format_date", false)
 ##
 ##
-## func change_version(passalong: ModLoaderHookPass) -> void:
-##     var main_node = passalong.reference_object
+## func change_version(linkage: ModLoaderHookLinkage) -> void:
+##     var main_node = linkage.reference_object
 ##     main_node.version = "Modloader Hooked!"
-##     passalong.execute_next()
+##     linkage.execute_next()
 ##     #GameWorld.version = "Modloader Woo"
 ##
 ##
-## func time_travel(passalong: ModLoaderHookPass, day: int, month: int, year: int):
+## func time_travel(linkage: ModLoaderHookLinkage, day: int, month: int, year: int):
 ##     print("time travel!")
 ##     year -= 100
-##     return passalong.execute_next([day, month, year])
+##     return linkage.execute_next([day, month, year])
 ##
 ##
-## func add_season(passalong: ModLoaderHookPass, day: int, month: int, year: int):
-##     var output = passalong.execute_next([day, month, year])
+## func add_season(linkage: ModLoaderHookLinkage, day: int, month: int, year: int):
+##     var output = linkage.execute_next([day, month, year])
 ##     match month:
 ##          9, 10, 11:
 ##     	        output += ", Autumn"
