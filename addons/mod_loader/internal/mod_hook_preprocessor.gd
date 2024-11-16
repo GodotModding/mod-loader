@@ -12,7 +12,7 @@ const METHOD_PREFIX := "vanilla_"
 const HASH_COLLISION_ERROR := \
 	"MODDING EXPORT ERROR: Hash collision between %s and %s. The collision can be resolved by renaming one of the methods or changing their script's path."
 const MOD_LOADER_HOOKS_START_STRING := \
-	"\n# ModLoader Hooks - The following code has been automatically added by the Godot Mod Loader export plugin."
+	"\n# ModLoader Hooks - The following code has been automatically added by the Godot Mod Loader."
 
 
 ## finds function names used as setters and getters (excluding inline definitions)
