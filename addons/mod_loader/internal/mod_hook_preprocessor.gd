@@ -10,7 +10,7 @@ const LOG_NAME := "ModLoader:ModHookPreProcessor"
 const REQUIRE_EXPLICIT_ADDITION := false
 const METHOD_PREFIX := "vanilla_"
 const HASH_COLLISION_ERROR := \
-	"MODDING EXPORT ERROR: Hash collision between %s and %s. The collision can be resolved by renaming one of the methods or changing their script's path."
+	"MODDING HOOKS ERROR: Hash collision between %s and %s. The collision can be resolved by renaming one of the methods or changing their script's path."
 const MOD_LOADER_HOOKS_START_STRING := \
 	"\n# ModLoader Hooks - The following code has been automatically added by the Godot Mod Loader."
 
@@ -71,16 +71,11 @@ func process_script(path: String, enable_hook_check := false) -> String:
 		var method_arg_string_with_defaults_and_types := get_function_parameters(method.name, source_code, is_static)
 		var method_arg_string_names_only := get_function_arg_name_string(method.args)
 
-		var hash_before := _ModLoaderHooks.get_hook_hash(path, method.name, true)
-		var hash_after := _ModLoaderHooks.get_hook_hash(path, method.name, false)
-		var hash_before_data := [path, method.name, true]
-		var hash_after_data := [path, method.name, false]
-		if hashmap.has(hash_before):
-			push_error(HASH_COLLISION_ERROR%[hashmap[hash_before], hash_before_data])
-		if hashmap.has(hash_after):
-			push_error(HASH_COLLISION_ERROR %[hashmap[hash_after], hash_after_data])
-		hashmap[hash_before] = hash_before_data
-		hashmap[hash_after] = hash_after_data
+		var hook_id := _ModLoaderHooks.get_hook_hash(path, method.name)
+		var hook_id_data := [path, method.name, true]
+		if hashmap.has(hook_id):
+			push_error(HASH_COLLISION_ERROR%[hashmap[hook_id], hook_id_data])
+		hashmap[hook_id] = hook_id_data
 
 		var mod_loader_hook_string := get_mod_loader_hook(
 			method.name,
@@ -89,9 +84,7 @@ func process_script(path: String, enable_hook_check := false) -> String:
 			type_string,
 			method.return.usage,
 			is_static,
-			path,
-			hash_before,
-			hash_after,
+			hook_id,
 			METHOD_PREFIX + class_prefix,
 			enable_hook_check
 		)
@@ -265,38 +258,29 @@ static func get_mod_loader_hook(
 	method_type: String,
 	return_prop_usage: int,
 	is_static: bool,
-	script_path: String,
-	hash_before: int,
-	hash_after: int,
+	hook_id: int,
 	method_prefix := METHOD_PREFIX,
 	enable_hook_check := false,
 ) -> String:
 	var type_string := " -> %s" % method_type if not method_type.is_empty() else ""
 	var static_string := "static " if is_static else ""
-	# Cannot use "self" inside a static function.
-	var self_string := "null" if is_static else "self"
 	var return_var := "var %s = " % "return_var" if not method_type.is_empty() or return_prop_usage == 131072 else ""
-	var method_return := "return %s" % "return_var" if not method_type.is_empty() or return_prop_usage == 131072 else ""
+	var method_return := "return " if not method_type.is_empty() or return_prop_usage == 131072 else ""
 	var hook_check := 'if ModLoaderStore.get("any_mod_hooked") and ModLoaderStore.any_mod_hooked:\n\t\t' if enable_hook_check else ""
 
 	return """
 {STATIC}func {METHOD_NAME}({METHOD_PARAMS}){RETURN_TYPE_STRING}:
-	{HOOK_CHECK}_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_BEFORE})
-	{METHOD_RETURN_VAR}{METHOD_PREFIX}_{METHOD_NAME}({METHOD_ARGS})
-	{HOOK_CHECK}_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_AFTER})
-	{METHOD_RETURN}""".format({
+	{HOOK_CHECK}{METHOD_RETURN}_ModLoaderHooks.call_hooks({METHOD_PREFIX}_{METHOD_NAME}, [{METHOD_ARGS}], {HOOK_ID})
+	""".format({
 		"METHOD_PREFIX": method_prefix,
 		"METHOD_NAME": method_name,
 		"METHOD_PARAMS": method_arg_string_with_defaults_and_types,
 		"RETURN_TYPE_STRING": type_string,
 		"METHOD_ARGS": method_arg_string_names_only,
-		"SCRIPT_PATH": script_path,
 		"METHOD_RETURN_VAR": return_var,
 		"METHOD_RETURN": method_return,
 		"STATIC": static_string,
-		"SELF": self_string,
-		"HOOK_ID_BEFORE": hash_before,
-		"HOOK_ID_AFTER": hash_after,
+		"HOOK_ID": hook_id,
 		"HOOK_CHECK": hook_check,
 	})
 
