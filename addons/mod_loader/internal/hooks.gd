@@ -7,7 +7,8 @@ extends Object
 
 const LOG_NAME := "ModLoader:Hooks"
 
-## To add hooks from a mod use [method ModLoaderMod.add_hook]
+## Internal ModLoader method. [br]
+## To add hooks from a mod use [method ModLoaderMod.add_hook].
 static func add_hook(mod_callable: Callable, script_path: String, method_name: String) -> void:
 	ModLoaderStore.any_mod_hooked = true
 	var hash = get_hook_hash(script_path, method_name)
@@ -26,14 +27,12 @@ static func call_hooks(vanilla_method: Callable, args: Array, hook_hash: int) ->
 	if not hooks:
 		return vanilla_method.callv(args)
 
-	# Create a passalong chain which will recursively call down until the vanilla method is reached
-	var passalong := ModLoaderHookPass.new(vanilla_method)
+	# Create a linkage chain which will recursively call down until the vanilla method is reached
+	var linkage := ModLoaderHookLinkage.new(vanilla_method)
 	for mod_func in hooks:
-		passalong = ModLoaderHookPass.new(mod_func, passalong)
+		linkage = ModLoaderHookLinkage.new(mod_func, linkage)
 
-	# Starts the execution chain
-	passalong._execute(args)
-	return passalong.return_val
+	return linkage._execute_chain(args)
 
 
 static func get_hook_hash(path: String, method: String) -> int:
