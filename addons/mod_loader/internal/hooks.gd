@@ -28,9 +28,9 @@ static func call_hooks(vanilla_method: Callable, args: Array, hook_hash: int) ->
 		return vanilla_method.callv(args)
 
 	# Create a linkage chain which will recursively call down until the vanilla method is reached
-	var linkage := ModLoaderHookLinkage.new(vanilla_method)
+	var linkage := ModLoaderHook.new(vanilla_method)
 	for mod_func in hooks:
-		linkage = ModLoaderHookLinkage.new(mod_func, linkage)
+		linkage = ModLoaderHook.new(mod_func, linkage)
 
 	return linkage._execute_chain(args)
 

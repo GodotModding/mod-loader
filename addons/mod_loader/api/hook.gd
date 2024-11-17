@@ -1,4 +1,4 @@
-class_name ModLoaderHookLinkage
+class_name ModLoaderHook
 extends RefCounted
 ## Small class to pass data between mod hook calls.[br]
 ## For examples, see [method ModLoaderMod.add_hook].
@@ -10,19 +10,24 @@ var reference_object: Object
 
 var _return_val: Variant
 # The next linkage in the chain
-var _next_linkage: ModLoaderHookLinkage
+var _next_linkage: ModLoaderHook
 # The mod hook callable or vanilla method
 var _method: Callable
 
 
-func _init(mod_method: Callable, next_linkage: ModLoaderHookLinkage = null) -> void:
+func _init(mod_method: Callable, next_linkage: ModLoaderHook = null) -> void:
 	_method = mod_method
 	_next_linkage = next_linkage
 	reference_object = _next_linkage.reference_object if _next_linkage else _method.get_object()
 
 
 ## Will execute the next mod hook callable or vanilla method and return the result.[br]
-## Make sure to call this method [i]somewhere[/i] in your [method ModLoaderMod.add_hook] [param mod_callable].
+## Make sure to call this method [i]somewhere[/i] in the [param mod_callable] you pass to [method ModLoaderMod.add_hook]. [br]
+##
+## [br][b]Parameters:[/b][br]
+## - [param args] ([Array]): An array of all arguments passed into the vanilla function. [br]
+##
+## [br][b]Returns:[/b] [Variant][br][br]
 func execute_next(args := []) -> Variant:
 	if _next_linkage:
 		_return_val = _next_linkage._execute(args)
