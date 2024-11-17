@@ -16,18 +16,21 @@ static func add_hook(mod_callable: Callable, script_path: String, method_name: S
 	if not ModLoaderStore.modding_hooks.has(hash):
 		ModLoaderStore.modding_hooks[hash] = []
 	ModLoaderStore.modding_hooks[hash].push_back(mod_callable)
-	ModLoaderLog.debug('Added hook script: "%s" to method: "%s"' % [script_path, method_name ], LOG_NAME)
+	ModLoaderLog.debug('Added hook "%s" to to method: "%s" in script: "%s"'
+		% [mod_callable.get_method(), method_name, script_path], LOG_NAME
+	)
 
 	if not ModLoaderStore.hooked_script_paths.has(script_path):
 		ModLoaderStore.hooked_script_paths[script_path] = true
 
 
 static func call_hooks(vanilla_method: Callable, args: Array, hook_hash: int) -> Variant:
-	var hooks = ModLoaderStore.modding_hooks.get(hook_hash, null)
-	if not hooks:
+	var hooks: Array = ModLoaderStore.modding_hooks.get(hook_hash, [])
+	if hooks.is_empty():
 		return vanilla_method.callv(args)
 
 	# Create a hook chain which will recursively call down until the vanilla method is reached
+	hooks.reverse()
 	var chain_hook := ModLoaderHook.new(vanilla_method)
 	for mod_func in hooks:
 		chain_hook = ModLoaderHook.new(mod_func, chain_hook)
