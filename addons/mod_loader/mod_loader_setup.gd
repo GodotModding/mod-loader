@@ -77,9 +77,9 @@ const new_global_classes := [
 		"path": "res://addons/mod_loader/internal/hooks.gd"
 	}, {
 		"base": "RefCounted",
-		"class": "ModLoaderHookLinkage",
+		"class": "ModLoaderHook",
 		"language": "GDScript",
-		"path": "res://addons/mod_loader/api/hook_linkage.gd"
+		"path": "res://addons/mod_loader/api/hook.gd"
 	}
 ]
 

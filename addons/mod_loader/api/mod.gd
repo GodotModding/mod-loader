@@ -47,57 +47,71 @@ static func install_script_extension(child_script_path: String) -> void:
 
 
 ## Adds a hook, a custom mod function, to a vanilla method.[br]
-## Opposed to script extensions, hooks can be applied to scripts that use [code]class_name[/code] without issues.[br]
+## Opposed to script extensions, hooks can be applied to scripts that use
+## [code]class_name[/code] without issues.[br]
 ## If possible, prefer [method install_script_extension].[br]
 ##
 ## [br][b]Parameters:[/b][br]
-## - [param mod_callable] ([Callable]): The function that will be called.[br]
+## - [param mod_callable] ([Callable]): The function that will executed when
+##   the vanilla method is executed. When writing a mod callable, make sure
+##   that it [i]always[/i] receives a [ModLoaderHook] object as first argument,
+##   which is used to continue down the hook chain (see: [method ModLoaderHook.execute_next])
+##   and allows manipulating parameters before and return values after the
+##   vanilla method is called. [br]
 ## - [param script_path] ([String]): Path to the vanilla script that holds the method.[br]
 ## - [param method_name] ([String]): The method the hook will be applied to.[br]
 ##
 ## [br][b]Returns:[/b] [code]void[/code][br][br]
 ##
-## The [param mod_callable] is just a function that will be executed when the vanilla method is executed. [br]
-## It receives a [ModLoaderHookLinkage] object to pass data around between hook methods. [br]
-## This allows manipulating parameters before and return values after the vanilla method is called. [br]
+## [b]Examples:[/b]
 ##
 ## [br]
 ## Given the following vanilla script [code]main.gd[/code]
 ## [codeblock]
-## var version := "1.0.0"
+## class_name MainGame
+## extends Node2D
+##
+## var version := "vanilla 1.0.0"
+##
 ##
 ## func _ready():
-##     $UI/Label.text = "Version: %s" % version
-##     # format_date returns a String like "November the 15th, 2024"
-##     print("Today is %s" % Utilities.format_date(15, 11, 2024))
+##     $CanvasLayer/Control/Label.text = "Version: %s" % version
+##     print(Utilities.format_date(15, 11, 2024))
 ## [/codeblock]
 ##
-## It can be hooked in [code]mod_main.gd[/code] in several ways
+## It can be hooked in [code]mod_main.gd[/code] like this
 ## [codeblock]
+## extends Node
+##
 ## func _init() -> void:
-##     ModLoaderMod.add_hook(change_version, "res://main.gd", "_ready", false)
-##     ModLoaderMod.add_hook(time_travel, "res://tools/utilities.gd", "format_date", false)
-##     ModLoaderMod.add_hook(add_season, "res://tools/utilities.gd", "format_date", false)
+##     ModLoaderMod.add_hook(change_version, "res://main.gd", "_ready")
+##     ModLoaderMod.add_hook(time_travel, "res://tools/utilities.gd", "format_date")
+##     ModLoaderMod.add_hook(add_season, "res://tools/utilities.gd", "format_date")
 ##
 ##
-## func change_version(linkage: ModLoaderHookLinkage) -> void:
-##     var main_node = linkage.reference_object
+## ## The script we are hooking is attached to a node, which we can get from reference_object
+## ## then we can change any variables it has
+## func change_version(hook: ModLoaderHook) -> void:
+##     # Using a typecast here (with "as") can help with autocomplete and avoiding errors
+##     var main_node := hook.reference_object as MainGame
 ##     main_node.version = "Modloader Hooked!"
-##     linkage.execute_next()
-##     #GameWorld.version = "Modloader Woo"
+##     hook.execute_next()
 ##
 ##
-## func time_travel(linkage: ModLoaderHookLinkage, day: int, month: int, year: int):
+## ## Parameters can be manipulated easily by changing what is passed into .execute_next()
+## func time_travel(hook: ModLoaderHook, day: int, month: int, year: int):
 ##     print("time travel!")
 ##     year -= 100
-##     return linkage.execute_next([day, month, year])
+##     return hook.execute_next([day, month, year])
 ##
 ##
-## func add_season(linkage: ModLoaderHookLinkage, day: int, month: int, year: int):
-##     var output = linkage.execute_next([day, month, year])
+## ## The return value can be manipulated by calling the next hook (or vanilla) first
+## ## then changing it and returning the new value.
+## func add_season(hook: ModLoaderHook, day: int, month: int, year: int):
+##     var output = hook.execute_next([day, month, year])
 ##     match month:
-##          9, 10, 11:
-##     	        output += ", Autumn"
+##         9, 10, 11:
+##             output += ", Autumn"
 ##     return output
 ## [/codeblock]
 ##
