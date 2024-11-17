@@ -27,12 +27,12 @@ static func call_hooks(vanilla_method: Callable, args: Array, hook_hash: int) ->
 	if not hooks:
 		return vanilla_method.callv(args)
 
-	# Create a linkage chain which will recursively call down until the vanilla method is reached
-	var linkage := ModLoaderHook.new(vanilla_method)
+	# Create a hook chain which will recursively call down until the vanilla method is reached
+	var chain_hook := ModLoaderHook.new(vanilla_method)
 	for mod_func in hooks:
-		linkage = ModLoaderHook.new(mod_func, linkage)
+		chain_hook = ModLoaderHook.new(mod_func, chain_hook)
 
-	return linkage._execute_chain(args)
+	return chain_hook._execute_chain(args)
 
 
 static func get_hook_hash(path: String, method: String) -> int:
