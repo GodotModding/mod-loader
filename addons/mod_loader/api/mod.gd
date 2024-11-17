@@ -83,6 +83,7 @@ static func install_script_extension(child_script_path: String) -> void:
 ## [codeblock]
 ## extends Node
 ##
+##
 ## func _init() -> void:
 ##     ModLoaderMod.add_hook(change_version, "res://main.gd", "_ready")
 ##     ModLoaderMod.add_hook(time_travel, "res://tools/utilities.gd", "format_date")
@@ -95,21 +96,32 @@ static func install_script_extension(child_script_path: String) -> void:
 ##     # Using a typecast here (with "as") can help with autocomplete and avoiding errors
 ##     var main_node := hook.reference_object as MainGame
 ##     main_node.version = "Modloader Hooked!"
+##     # _ready, which we are hooking, does not have any arguments
 ##     hook.execute_next()
 ##
 ##
 ## ## Parameters can be manipulated easily by changing what is passed into .execute_next()
-## func time_travel(hook: ModLoaderHook, day: int, month: int, year: int):
+## ## The vanilla method (Utilities.format_date) takes 3 arguments, our hook method takes
+## ## the ModLoaderHook followed by the same 3
+## func time_travel(hook: ModLoaderHook, day: int, month: int, year: int) -> String:
 ##     print("time travel!")
 ##     year -= 100
+##     # Just the vanilla arguments are passed along in the same order, wrapped into an Array
 ##     return hook.execute_next([day, month, year])
 ##
 ##
 ## ## The return value can be manipulated by calling the next hook (or vanilla) first
 ## ## then changing it and returning the new value.
-## func add_season(hook: ModLoaderHook, day: int, month: int, year: int):
+## ## Multiple hooks can be added to a single method.
+## func add_season(hook: ModLoaderHook, day: int, month: int, year: int) -> String:
 ##     var output = hook.execute_next([day, month, year])
 ##     match month:
+##         12, 1, 2:
+##             output += ", Winter"
+##         3, 4, 5:
+##             output += ", Spring"
+##         6, 7, 8:
+##             output += ", Summer"
 ##         9, 10, 11:
 ##             output += ", Autumn"
 ##     return output
@@ -202,7 +214,7 @@ static func extend_scene(scene_vanilla_path: String, edit_callable: Callable) ->
 ## - [param mod_id] ([String]): The ID of the mod.[br]
 ##
 ## [br][b]Returns:[/b][br]
-## - [[ModData]]: The [ModData] associated with the provided [code]mod_id[/code], or null if the [code]mod_id[/code] is invalid.[br]
+## - [ModData]: The [ModData] associated with the provided [code]mod_id[/code], or null if the [code]mod_id[/code] is invalid.[br]
 static func get_mod_data(mod_id: String) -> ModData:
 	if not ModLoaderStore.mod_data.has(mod_id):
 		ModLoaderLog.error("%s is an invalid mod_id" % mod_id, LOG_NAME)
@@ -214,7 +226,7 @@ static func get_mod_data(mod_id: String) -> ModData:
 ## Gets the [ModData] of all loaded Mods as [Dictionary].[br]
 ##
 ## [br][b]Returns:[/b][br]
-## - [[Dictionary]]: A dictionary containing the [ModData] of all loaded mods.[br]
+## - [Dictionary]: A dictionary containing the [ModData] of all loaded mods.[br]
 static func get_mod_data_all() -> Dictionary:
 	return ModLoaderStore.mod_data
 
@@ -222,7 +234,7 @@ static func get_mod_data_all() -> Dictionary:
 ## Returns the path to the directory where unpacked mods are stored.[br]
 ##
 ## [br][b]Returns:[/b][br]
-## - [[String]]: The path to the unpacked mods directory.[br]
+## - [String]: The path to the unpacked mods directory.[br]
 static func get_unpacked_dir() -> String:
 	return _ModLoaderPath.get_unpacked_mods_dir_path()
 
