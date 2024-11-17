@@ -3,10 +3,10 @@ extends Object
 ##
 ## This Class provides helper functions to build mods.
 ##
-## @tutorial(Script Extensions):	https://github.com/GodotModding/godot-mod-loader/wiki/Script-Extensions
-## @tutorial(Script Hooks):			https://github.com/GodotModding/godot-mod-loader/wiki/Script-Hooks
-## @tutorial(Mod Structure):		https://github.com/GodotModding/godot-mod-loader/wiki/Mod-Structure
-## @tutorial(Mod Files):			https://github.com/GodotModding/godot-mod-loader/wiki/Mod-Files
+## @tutorial(Script Extensions):	https://wiki.godotmodding.com/#/guides/modding/script_extensions
+## @tutorial(Script Hooks):			https://wiki.godotmodding.com/#/guides/modding/script_hooks
+## @tutorial(Mod Structure):		https://wiki.godotmodding.com/#/guides/modding/mod_structure
+## @tutorial(Mod Files):			https://wiki.godotmodding.com/#/guides/modding/mod_files
 
 
 const LOG_NAME := "ModLoader:Mod"
