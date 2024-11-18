@@ -47,6 +47,33 @@ static func install_script_extension(child_script_path: String) -> void:
 		_ModLoaderScriptExtension.apply_extension(child_script_path)
 
 
+## Adds all methods from a file as hooks. [br]
+## The methods in the file need to have the exact same name as the vanilla method. [br]
+## See: [method add_hook]
+##
+## [codeblock]
+## ModLoaderMod.install_script_hooks(
+##     "res://tools/utilities.gd",
+##     extensions_dir_path.path_join("tools/utilities-hook.gd")
+## )
+## [/codeblock]
+static func install_script_hooks(vanilla_script_path: String, hook_script_path: String) -> void:
+	var script := load(hook_script_path) as GDScript
+	var method_holder := script.new()
+
+	# Every script that inherits RefCounted will be cleaned up by the engine as
+	# soon as there are no more references to it. If the reference is gone
+	# the method can't be called and everything returns null.
+	# The only exception would be static methods, but then script variables couldn't be used.
+	# If the need for other types ever arises, we can store the references too.
+	if method_holder is RefCounted:
+		ModLoaderLog.fatal("Scripts holding mod hooks should always extend Object (%s)" % hook_script_path, LOG_NAME)
+
+	var methods := script.get_script_method_list()
+	for method in methods:
+		ModLoaderMod.add_hook(Callable(method_holder, method.name), vanilla_script_path, method.name)
+
+
 ## Adds a hook, a custom mod function, to a vanilla method.[br]
 ## Opposed to script extensions, hooks can be applied to scripts that use
 ## [code]class_name[/code] without issues.[br]
