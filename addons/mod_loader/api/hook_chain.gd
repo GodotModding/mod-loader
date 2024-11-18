@@ -12,6 +12,9 @@ var _callbacks := []
 var _callback_index := -1
 
 
+const LOG_NAME := "ModLoaderHookChain"
+
+
 func _init(reference_object: Object, callbacks: Array) -> void:
 	self.reference_object = reference_object
 	_callbacks = callbacks
@@ -19,7 +22,7 @@ func _init(reference_object: Object, callbacks: Array) -> void:
 
 
 ## Will execute the next mod hook callable or vanilla method and return the result.[br]
-## Make sure to call this method [i]once[/i] somewhere in the [param mod_callable] you pass to [method ModLoaderMod.add_hook]. [br]
+## Make sure to call this method [i][color=orange]once[/color][/i] somewhere in the [param mod_callable] you pass to [method ModLoaderMod.add_hook]. [br]
 ##
 ## [br][b]Parameters:[/b][br]
 ## - [param args] ([Array]): An array of all arguments passed into the vanilla function. [br]
@@ -27,7 +30,14 @@ func _init(reference_object: Object, callbacks: Array) -> void:
 ## [br][b]Returns:[/b] [Variant][br][br]
 func execute_next(args := []) -> Variant:
 	_callback_index -= 1
-	assert(_callback_index >= 0, "_callback_index should never be negative. ModLoaderHookChain was modified in an unsupported way.")
+
+	if not _callback_index >= 0:
+		ModLoaderLog.fatal(
+			"The hook chain index should never be negative. " +
+			"A mod hook has called execute_next twice or ModLoaderHookChain was modified in an unsupported way.",
+			LOG_NAME
+		)
+		return
 
 	var callback =  _callbacks[_callback_index]
 
