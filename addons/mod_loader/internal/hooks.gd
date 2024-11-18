@@ -30,12 +30,10 @@ static func call_hooks(vanilla_method: Callable, args: Array, hook_hash: int) ->
 		return vanilla_method.callv(args)
 
 	# Create a hook chain which will recursively call down until the vanilla method is reached
-	hooks.reverse()
-	var chain_hook := ModLoaderHook.new(vanilla_method)
-	for mod_func in hooks:
-		chain_hook = ModLoaderHook.new(mod_func, chain_hook)
-
-	return chain_hook._execute_chain(args)
+	var callbacks = [vanilla_method]
+	callbacks.append_array(hooks)
+	var chain := ModLoaderHook.new(vanilla_method.get_object(), callbacks)
+	return chain.execute_next(args)
 
 
 static func get_hook_hash(path: String, method: String) -> int:
