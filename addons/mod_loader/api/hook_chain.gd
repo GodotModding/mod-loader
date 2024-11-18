@@ -1,6 +1,6 @@
-class_name ModLoaderHook
+class_name ModLoaderHookChain
 extends RefCounted
-## Small class to pass data between mod hook calls.[br]
+## Small class to keep the state of hook execution chains and move between mod hook calls.[br]
 ## For examples, see [method ModLoaderMod.add_hook].
 
 
@@ -9,16 +9,17 @@ extends RefCounted
 var reference_object: Object
 
 var _callbacks := []
-var _callback_index :=-1
+var _callback_index := -1
 
 
-func _init(reference_object:Object, callbacks : Array) -> void:
+func _init(reference_object: Object, callbacks: Array) -> void:
 	self.reference_object = reference_object
 	_callbacks = callbacks
 	_callback_index = callbacks.size()
 
+
 ## Will execute the next mod hook callable or vanilla method and return the result.[br]
-## Make sure to call this method [i]somewhere[/i] in the [param mod_callable] you pass to [method ModLoaderMod.add_hook]. [br]
+## Make sure to call this method [i]once[/i] somewhere in the [param mod_callable] you pass to [method ModLoaderMod.add_hook]. [br]
 ##
 ## [br][b]Parameters:[/b][br]
 ## - [param args] ([Array]): An array of all arguments passed into the vanilla function. [br]
@@ -26,11 +27,11 @@ func _init(reference_object:Object, callbacks : Array) -> void:
 ## [br][b]Returns:[/b] [Variant][br][br]
 func execute_next(args := []) -> Variant:
 	_callback_index -= 1
-	assert(_callback_index >= 0, "_callback_index should never be negative. ModLoaderHook was modified in an unsupported way.") 
+	assert(_callback_index >= 0, "_callback_index should never be negative. ModLoaderHookChain was modified in an unsupported way.")
 
 	var callback =  _callbacks[_callback_index]
 
-	#Vanilla call is always at index 0 and needs to be called without the hooked being passed
+	# Vanilla call is always at index 0 and needs to be called without the hook chain being passed
 	if _callback_index == 0:
 		return callback.callv(args)
 
