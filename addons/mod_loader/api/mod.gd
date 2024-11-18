@@ -82,8 +82,8 @@ static func install_script_hooks(vanilla_script_path: String, hook_script_path: 
 ## [br][b]Parameters:[/b][br]
 ## - [param mod_callable] ([Callable]): The function that will executed when
 ##   the vanilla method is executed. When writing a mod callable, make sure
-##   that it [i]always[/i] receives a [ModLoaderHook] object as first argument,
-##   which is used to continue down the hook chain (see: [method ModLoaderHook.execute_next])
+##   that it [i]always[/i] receives a [ModLoaderHookChain] object as first argument,
+##   which is used to continue down the hook chain (see: [method ModLoaderHookChain.execute_next])
 ##   and allows manipulating parameters before and return values after the
 ##   vanilla method is called. [br]
 ## - [param script_path] ([String]): Path to the vanilla script that holds the method.[br]
@@ -109,40 +109,38 @@ static func install_script_hooks(vanilla_script_path: String, hook_script_path: 
 ##
 ## It can be hooked in [code]mod_main.gd[/code] like this
 ## [codeblock]
-## extends Node
-##
-##
 ## func _init() -> void:
 ##     ModLoaderMod.add_hook(change_version, "res://main.gd", "_ready")
 ##     ModLoaderMod.add_hook(time_travel, "res://tools/utilities.gd", "format_date")
+##     # Multiple hooks can be added to a single method.
 ##     ModLoaderMod.add_hook(add_season, "res://tools/utilities.gd", "format_date")
 ##
 ##
-## ## The script we are hooking is attached to a node, which we can get from reference_object
-## ## then we can change any variables it has
-## func change_version(hook: ModLoaderHook) -> void:
+## # The script we are hooking is attached to a node, which we can get from reference_object
+## # then we can change any variables it has
+## func change_version(chain: ModLoaderHookChain) -> void:
 ##     # Using a typecast here (with "as") can help with autocomplete and avoiding errors
-##     var main_node := hook.reference_object as MainGame
+##     var main_node := chain.reference_object as MainGame
 ##     main_node.version = "Modloader Hooked!"
 ##     # _ready, which we are hooking, does not have any arguments
-##     hook.execute_next()
+##     chain.execute_next()
 ##
 ##
-## ## Parameters can be manipulated easily by changing what is passed into .execute_next()
-## ## The vanilla method (Utilities.format_date) takes 3 arguments, our hook method takes
-## ## the ModLoaderHook followed by the same 3
-## func time_travel(hook: ModLoaderHook, day: int, month: int, year: int) -> String:
+## # Parameters can be manipulated easily by changing what is passed into .execute_next()
+## # The vanilla method (Utilities.format_date) takes 3 arguments, our hook method takes
+## # the ModLoaderHookChain followed by the same 3
+## func time_travel(chain: ModLoaderHookChain, day: int, month: int, year: int) -> String:
 ##     print("time travel!")
 ##     year -= 100
 ##     # Just the vanilla arguments are passed along in the same order, wrapped into an Array
-##     return hook.execute_next([day, month, year])
+##     var val = chain.execute_next([day, month, year])
+##     return val
 ##
 ##
-## ## The return value can be manipulated by calling the next hook (or vanilla) first
-## ## then changing it and returning the new value.
-## ## Multiple hooks can be added to a single method.
-## func add_season(hook: ModLoaderHook, day: int, month: int, year: int) -> String:
-##     var output = hook.execute_next([day, month, year])
+## # The return value can be manipulated by calling the next hook (or vanilla) first
+## # then changing it and returning the new value.
+## func add_season(chain: ModLoaderHookChain, day: int, month: int, year: int) -> String:
+##     var output = chain.execute_next([day, month, year])
 ##     match month:
 ##         12, 1, 2:
 ##             output += ", Winter"
