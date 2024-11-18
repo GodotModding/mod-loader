@@ -14,10 +14,11 @@ const LOG_NAME := "ModLoader:Mod"
 
 ## Installs a script extension that extends a vanilla script.[br]
 ## This is the preferred way of modifying a vanilla [Script][br]
-## Since Godot 4, extensions can cause issues with scripts that use [code]class_name[/code] and should be avoided in those cases.[br]
+## Since Godot 4, extensions can cause issues with scripts that use [code]class_name[/code]
+## and should be avoided if present.[br]
 ## See [method add_hook] for those cases.[br]
 ## [br]
-## The [code]child_script_path[/code] should point to your mod's extender script.[br]
+## The [param child_script_path] should point to your mod's extender script.[br]
 ## Example: [code]"MOD/extensions/singletons/utils.gd"[/code][br]
 ## Inside the extender script, include [code]extends {target}[/code] where [code]{target}[/code] is the vanilla path.[br]
 ## Example: [code]extends "res://singletons/utils.gd"[/code].[br]
