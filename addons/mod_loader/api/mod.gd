@@ -98,7 +98,7 @@ static func install_script_hooks(vanilla_script_path: String, hook_script_path: 
 				return a_name.similarity(target_name) > b_name.similarity(target_name)
 		).bind(hook.name))
 
-		var closest_vanilla := vanilla_methods.front()
+		var closest_vanilla: String = vanilla_methods.front()
 		if closest_vanilla.similarity(hook.name) > 0.8:
 			ModLoaderLog.debug(
 				'Did you mean "%s" instead of "%s"?'
