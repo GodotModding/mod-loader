@@ -67,8 +67,16 @@ runs:
       if: ${{ !cancelled() }}
       shell: bash
       run: ln -s ${{ github.workspace }}/addons/JSON_Schema_Validator ${{ github.workspace }}/test/addons/JSON_Schema_Validator
-
-    - name: "Run Tests"
+    - name: "🔄️ Run Import"
+      if: ${{ runner.OS == 'Linux'}} && ${{ !cancelled() }}
+      env:
+        TEST_PROJECT: ${{ inputs.godot-test-project }}
+      shell: bash
+      run: |
+        cd "${TEST_PROJECT}"
+        chmod +x run_import.sh
+        ./run_import.sh "$HOME/godot-linux/godot"
+    - name: "🧪 Run Tests"
       if: ${{ runner.OS == 'Linux'}} && ${{ !cancelled() }}
       env:
         TEST_PROJECT: ${{ inputs.godot-test-project }}
