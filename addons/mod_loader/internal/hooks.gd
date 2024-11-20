@@ -11,8 +11,7 @@ const LOG_NAME := "ModLoader:Hooks"
 ## To add hooks from a mod use [method ModLoaderMod.add_hook].
 static func add_hook(mod_callable: Callable, script_path: String, method_name: String) -> void:
 	ModLoaderStore.any_mod_hooked = true
-	var hash = get_hook_hash(script_path, method_name)
-
+	var hash := get_hook_hash(script_path, method_name)
 	if not ModLoaderStore.modding_hooks.has(hash):
 		ModLoaderStore.modding_hooks[hash] = []
 	ModLoaderStore.modding_hooks[hash].push_back(mod_callable)
@@ -29,11 +28,17 @@ static func call_hooks(vanilla_method: Callable, args: Array, hook_hash: int) ->
 	if hooks.is_empty():
 		return vanilla_method.callv(args)
 
-	# Create a hook chain which will call down until the vanilla method is reached
-	var callbacks = [vanilla_method]
-	callbacks.append_array(hooks)
-	var chain := ModLoaderHookChain.new(vanilla_method.get_object(), callbacks)
+	var chain := ModLoaderHookChain.new(vanilla_method.get_object(), [vanilla_method] + hooks)
 	return chain.execute_next(args)
+
+
+static func call_hooks_async(vanilla_method: Callable, args: Array, hook_hash: int) -> Variant:
+	var hooks: Array = ModLoaderStore.modding_hooks.get(hook_hash, [])
+	if hooks.is_empty():
+		return await vanilla_method.callv(args)
+
+	var chain := ModLoaderHookChain.new(vanilla_method.get_object(), [vanilla_method] + hooks)
+	return await chain.async_execute_next(args)
 
 
 static func get_hook_hash(path: String, method: String) -> int:
