@@ -289,6 +289,9 @@ static func get_all() -> Array:
 static func get_by_mod(mod_name: String) -> Array:
 	var log_entries := []
 
+	if not _is_store_available():
+		return log_entries
+
 	if not ModLoaderStore.logged_messages.by_mod.has(mod_name):
 		error("\"%s\" not found in logged messages." % mod_name, LOG_NAME)
 		return []
@@ -349,7 +352,7 @@ static func _log(message: String, mod_name: String, log_type: String = "info", o
 	if only_once and _is_logged_before(log_entry):
 		return
 
-	if ModLoaderStore:
+	if _is_store_available():
 		_store_log(log_entry)
 
 	# Check if the scene_tree is available
@@ -390,7 +393,7 @@ static func _log(message: String, mod_name: String, log_type: String = "info", o
 
 
 static func _is_mod_name_ignored(mod_name: String) -> bool:
-	if not ModLoaderStore:
+	if not _is_store_available():
 		return false
 
 	var ignored_mod_names := ModLoaderStore.ml_options.ignored_mod_names_in_log as Array
@@ -402,13 +405,16 @@ static func _is_mod_name_ignored(mod_name: String) -> bool:
 
 
 static func _get_verbosity() -> int:
-	if not ModLoaderStore:
+	if not _is_store_available():
 		return VERBOSITY_LEVEL.DEBUG
 
 	return ModLoaderStore.ml_options.log_level
 
 
 static func _store_log(log_entry: ModLoaderLogEntry) -> void:
+	if not _is_store_available():
+		return
+
 	var existing_entry: ModLoaderLogEntry
 
 	# Store in all
@@ -433,6 +439,9 @@ static func _store_log(log_entry: ModLoaderLogEntry) -> void:
 
 
 static func _is_logged_before(entry: ModLoaderLogEntry) -> bool:
+	if not _is_store_available():
+		return false
+
 	if not ModLoaderStore.logged_messages.all.has(entry.get_md5()):
 		return false
 
@@ -540,6 +549,9 @@ static func _clear_old_log_backups() -> void:
 		for file_to_delete in backups:
 			dir.remove(file_to_delete)
 
+
+static func _is_store_available() -> bool:
+	return ModLoaderStore and "ml_options" in ModLoaderStore
 
 # Internal util funcs
 # =============================================================================
