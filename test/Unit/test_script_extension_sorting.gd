@@ -8,6 +8,7 @@ extends GutTest
 #	"res://mods-unpacked/test-mod3/extensions/script_extension_sorting/script_d.gd"
 #]
 
+# https://github.com/GodotModding/godot-mod-loader/pull/357
 var order_after_357_correct := [
 	"res://mods-unpacked/test-mod3/extensions/script_extension_sorting/script_b.gd",
 	"res://mods-unpacked/test-mod1/extensions/script_extension_sorting/script_c.gd",
