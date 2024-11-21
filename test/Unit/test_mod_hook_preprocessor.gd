@@ -35,10 +35,10 @@ func test_get_closing_paren_index(params: Array = use_parameters(test_get_closin
 
 
 var test_match_func_with_whitespace_params = [
-	["abc", FUNCTIONS_SAMPLE1, 0, ["func abc(", 0, 9]],
-	["test", FUNCTIONS_SAMPLE1, 0, ["func test(", 19, 29]],
-	["_ready", FUNCTIONS_SAMPLE2, 0, ["func _ready(", 70, 82]],
-	["_on_hit_detector_body_entered", FUNCTIONS_SAMPLE2, 0, ["func _on_hit_detector_body_entered(", 155, 190]],
+	["abc", FUNCTIONS_SAMPLE1, 0, ["func abc("]],
+	["test", FUNCTIONS_SAMPLE1, 0, ["func test("]],
+	["_ready", FUNCTIONS_SAMPLE2, 0, ["func _ready("]],
+	["_on_hit_detector_body_entered", FUNCTIONS_SAMPLE2, 0, ["func _on_hit_detector_body_entered("]],
 ]
 
 const FUNCTIONS_SAMPLE1 := """\
@@ -69,6 +69,8 @@ func _on_hit_detector_body_entered(body: Node3D) -> void:
 	Global.reset_game()
 """
 
+
+# We can't (easily) test for start and end indices due to different line endings between Windows and Linux.
 func test_match_func_with_whitespace(params: Array = use_parameters(test_match_func_with_whitespace_params)) -> void:
 	# prepare
 	var method_name: String = params[0]
@@ -76,8 +78,6 @@ func test_match_func_with_whitespace(params: Array = use_parameters(test_match_f
 	var offset: int  = params[2]
 
 	var expected_string: String = params.back()[0]
-	var expected_start: int = params.back()[1]
-	var expected_end: int = params.back()[2]
 
 	# test
 	var result := _ModLoaderModHookPreProcessor.match_func_with_whitespace(method_name, text, offset)
@@ -88,12 +88,4 @@ func test_match_func_with_whitespace(params: Array = use_parameters(test_match_f
 	assert_eq(
 		result.get_string(), expected_string,
 		"expected %s, got %s" % [expected_string, result.get_string()]
-	)
-	assert_eq(
-		result.get_start(), expected_start,
-		"expected %s, got %s" % [expected_start, result.get_start()]
-	)
-	assert_eq(
-		result.get_end(), expected_end,
-		"expected %s, got %s" % [expected_end, result.get_end()]
 	)
