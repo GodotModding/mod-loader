@@ -8,7 +8,7 @@ extends RefCounted
 ## If the hooked method is [code]static[/code], it will contain the [GDScript] itself.
 var reference_object: Object
 
-var _callbacks := []
+var _callbacks: Array[Callable] = []
 var _callback_index := -1
 
 
@@ -17,7 +17,7 @@ const LOG_NAME := "ModLoaderHookChain"
 
 func _init(reference_object: Object, callbacks: Array) -> void:
 	self.reference_object = reference_object
-	_callbacks = callbacks
+	_callbacks.assign(callbacks)
 	_callback_index = callbacks.size()
 
 
@@ -31,7 +31,7 @@ func _init(reference_object: Object, callbacks: Array) -> void:
 func execute_next(args := []) -> Variant:
 	_callback_index -= 1
 
-	if not _callback_index >= 0:
+	if _callback_index < 0:
 		ModLoaderLog.fatal(
 			"The hook chain index should never be negative. " +
 			"A mod hook has called execute_next twice or ModLoaderHookChain was modified in an unsupported way.",
@@ -39,7 +39,7 @@ func execute_next(args := []) -> Variant:
 		)
 		return
 
-	var callback =  _callbacks[_callback_index]
+	var callback :=  _callbacks[_callback_index]
 
 	# Vanilla call is always at index 0 and needs to be called without the hook chain being passed
 	if _callback_index == 0:
