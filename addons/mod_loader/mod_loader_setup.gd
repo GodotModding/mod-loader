@@ -234,7 +234,7 @@ func setup_file_data() -> void:
 	# if --main-pack cli arg is not set
 	file_name.pck = ModLoaderSetupUtils.get_file_name_from_path(path.exe, true, true)  if file_name.cli_arg_pck == '' else file_name.cli_arg_pck
 	# C:/path/to/game/game.pck
-	path.pck = path.game_base_dir.path_join(file_name.pck + '.pck')
+	path.pck = path.game_base_dir.plus_file(file_name.pck + '.pck')
 	# C:/path/to/game/addons/mod_loader/project.binary
 	path.project_binary = path.mod_loader_dir + "project.binary"
 
