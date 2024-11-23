@@ -15,6 +15,8 @@ var _callback_index := -1
 const LOG_NAME := "ModLoaderHookChain"
 
 
+# `callbacks` is kept as untyped Array for simplicity when creating a new chain.
+# This approach allows direct use of `[vanilla_method] + hooks` without the need to cast types with Array.assign().
 func _init(reference_object: Object, callbacks: Array) -> void:
 	self.reference_object = reference_object
 	_callbacks.assign(callbacks)
