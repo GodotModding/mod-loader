@@ -38,7 +38,7 @@ static func call_hooks_async(vanilla_method: Callable, args: Array, hook_hash: i
 		return await vanilla_method.callv(args)
 
 	var chain := ModLoaderHookChain.new(vanilla_method.get_object(), [vanilla_method] + hooks)
-	return await chain.async_execute_next(args)
+	return await chain.execute_next_async(args)
 
 
 static func get_hook_hash(path: String, method: String) -> int:

@@ -31,16 +31,18 @@ func _init(reference_object: Object, callbacks: Array) -> void:
 ##
 ## [br][b]Returns:[/b] [Variant][br][br]
 func execute_next(args := []) -> Variant:
-	var callback := next_callback()
+	var callback := _get_next_callback()
+	if not callback:
+		return
 
 	# Vanilla needs to be called without the hook chain being passed
-	if is_vanilla():
+	if _is_callback_vanilla():
 		return callback.callv(args)
 
 	return callback.callv([self] + args)
 
 
-## Same as [method execute_next], but asynchronous - it can be used with [code]await[/code]. [br]
+## Same as [method execute_next], but asynchronous - it can be used if a method uses [code]await[/code]. [br]
 ## This hook needs to be used if the vanilla method uses [code]await[/code] somewhere. [br]
 ## Make sure to call this method [i][color=orange]once[/color][/i] somewhere in the [param mod_callable] you pass to [method ModLoaderMod.add_hook]. [br]
 ##
@@ -49,16 +51,18 @@ func execute_next(args := []) -> Variant:
 ##
 ## [br][b]Returns:[/b] [Variant][br][br]
 func execute_next_async(args := []) -> Variant:
-	var callback := next_callback()
+	var callback := _get_next_callback()
+	if not callback:
+		return
 
 	# Vanilla needs to be called without the hook chain being passed
-	if is_vanilla():
+	if _is_callback_vanilla():
 		return await callback.callv(args)
 
 	return await callback.callv([self] + args)
 
 
-func next_callback() -> Variant:
+func _get_next_callback() -> Variant:
 	_callback_index -= 1
 	if not _callback_index >= 0:
 		ModLoaderLog.fatal(
@@ -71,5 +75,5 @@ func next_callback() -> Variant:
 	return _callbacks[_callback_index]
 
 
-func is_vanilla() -> bool:
+func _is_callback_vanilla() -> bool:
 	return _callback_index == 0
