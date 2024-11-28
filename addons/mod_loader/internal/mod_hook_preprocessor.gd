@@ -95,8 +95,6 @@ func process_script(path: String, enable_hook_check := false) -> String:
 			continue # Means invalid Script, should never happen
 
 		var is_async := is_func_async(func_body.get_string())
-		print_rich("[color=%s]" % ("pale_green" if is_async else "orange"), method.name)
-		print(func_body.get_string())
 		var method_arg_string_with_defaults_and_types := get_function_parameters(method.name, source_code, is_static)
 		var method_arg_string_names_only := get_function_arg_name_string(method.args)
 
