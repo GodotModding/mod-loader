@@ -271,7 +271,7 @@ static func get_mod_loader_hook(
 	return """
 {STATIC}func {METHOD_NAME}({METHOD_PARAMS}){RETURN_TYPE_STRING}:
 	{HOOK_CHECK}{METHOD_RETURN}_ModLoaderHooks.call_hooks({METHOD_PREFIX}_{METHOD_NAME}, [{METHOD_ARGS}], {HOOK_ID})
-	""".format({
+""".format({
 		"METHOD_PREFIX": method_prefix,
 		"METHOD_NAME": method_name,
 		"METHOD_PARAMS": method_arg_string_with_defaults_and_types,
