@@ -89,3 +89,19 @@ func test_match_func_with_whitespace(params: Array = use_parameters(test_match_f
 		result.get_string(), expected_string,
 		"expected %s, got %s" % [expected_string, result.get_string()]
 	)
+
+
+func test_process_script() -> void:
+	var hook_pre_processor := _ModLoaderModHookPreProcessor.new()
+	hook_pre_processor.process_begin()
+
+	var result_a := hook_pre_processor.process_script("res://test_mod_hook_preprocessor/test_script_A.gd")
+	var result_a_expected: GDScript = load("res://test_mod_hook_preprocessor/test_script_A_processed.gd")
+	var result_b := hook_pre_processor.process_script("res://test_mod_hook_preprocessor/test_script_B.gd")
+	var result_b_expected: GDScript = load("res://test_mod_hook_preprocessor/test_script_B_processed.gd")
+	var result_c := hook_pre_processor.process_script("res://test_mod_hook_preprocessor/test_script_C.gd")
+	var result_c_expected: GDScript = load("res://test_mod_hook_preprocessor/test_script_C_processed.gd")
+
+	assert_eq(result_a, result_a_expected.source_code.trim_prefix("#"))
+	assert_eq(result_b, result_b_expected.source_code.trim_prefix("#"))
+	assert_eq(result_c, result_c_expected.source_code.trim_prefix("#"))
