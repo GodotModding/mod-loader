@@ -28,16 +28,8 @@ var regex_super_call := RegEx.create_from_string("\\bsuper(?=\\s*\\()")
 ## The body of a function is every line that is empty or starts with an indent or comment
 var regex_func_body := RegEx.create_from_string("(?smn)\\N*(\\n^(([\\t #]+\\N*)|$))*")
 
-## matches if the await keyword is used in a method body
-## we're searching for "await", but not in a comment, so
-## (?m)^ -> from the start, (m flag makes ^ match each line start)
-## (...|...|...)*? -> match any of the following in any order,
-## ["\']{3}(?s:.)*?["\'] -> multiline content (s flag makes . include newlines too)
-## ["'].*?["'] -> string content
-## [^#\n\r] -> just not a comment or newline
-## (?>...) -> the atomic subgroup stops backtracking - once a string is captured it can't be used again
-## note: this wrongly detects await written in a multiline string: await"""
-var regex_contains_await := RegEx.create_from_string('(?m)^(?>["\']{3}(?s:.)*?["\']{3}|["\'].*?["\']|[^#\\n\\r])*?\\bawait\\b')
+## Just await between word boundaries
+var regex_keyword_await := RegEx.create_from_string("\\bawait\\b")
 
 
 var hashmap := {}
@@ -164,7 +156,60 @@ static func is_func_moddable(method: Dictionary, source_code: String, getters_se
 
 
 func is_func_async(func_body_text: String) -> bool:
-	return not regex_contains_await.search(func_body_text) == null
+	if not func_body_text.contains("await"):
+		return false
+
+	var lines := func_body_text.split("\n")
+	var in_multiline_string := false
+	var current_multiline_delimiter := ""
+
+	for line: String in lines:
+		var char_index := 0
+		while char_index < line.length():
+			if in_multiline_string:
+				# Check if we are exiting the multiline string
+				if line.substr(char_index).begins_with(current_multiline_delimiter):
+					in_multiline_string = false
+					char_index += 3
+				else:
+					char_index += 1
+				continue
+
+			# Comments: Skip the rest of the line
+			if line.substr(char_index).begins_with("#"):
+				break
+
+			# Check for multiline string start
+			if line.substr(char_index).begins_with('"""') or line.substr(char_index).begins_with("'''"):
+				in_multiline_string = true
+				current_multiline_delimiter = line.substr(char_index, 3)
+				char_index += 3
+				continue
+
+			# Check for single-quoted strings
+			if line[char_index] == '"' or line[char_index] == "'":
+				var delimiter = line[char_index]
+				char_index += 1
+				while char_index < line.length() and line[char_index] != delimiter:
+					# Skip escaped quotes
+					if line[char_index] == "\\":
+						char_index += 1
+					char_index += 1
+				char_index += 1  # Skip the closing quote
+				continue
+
+			# Check for the "await" keyword
+			if not line.substr(char_index).begins_with("await"):
+				char_index += 1
+				continue
+
+			# Ensure "await" is a standalone word
+			var start := char_index -1 if char_index > 0 else 0
+			if regex_keyword_await.search(line.substr(start)):
+				return true # Just return here, we don't need every occurence
+			#i += 5  # Normal parser: Skip the keyword
+
+	return false
 
 
 static func get_function_arg_name_string(args: Array) -> String:
