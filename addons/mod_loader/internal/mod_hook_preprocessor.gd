@@ -207,7 +207,9 @@ func is_func_async(func_body_text: String) -> bool:
 			var start := char_index -1 if char_index > 0 else 0
 			if regex_keyword_await.search(line.substr(start)):
 				return true # Just return here, we don't need every occurence
-			#i += 5  # Normal parser: Skip the keyword
+				# i += 5  # Normal parser: Skip the keyword
+			else:
+				char_index += 1
 
 	return false
 
