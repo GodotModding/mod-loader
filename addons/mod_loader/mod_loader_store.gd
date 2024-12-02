@@ -12,7 +12,7 @@ extends Node
 # Most of these settings should never need to change, aside from the DEBUG_*
 # options (which should be `false` when distributing compiled PCKs)
 
-const MODLOADER_VERSION = "6.2.0"
+const MODLOADER_VERSION := "7.0.0"
 
 # If true, a complete array of filepaths is stored for each mod. This is
 # disabled by default because the operation can be very expensive, but may
@@ -28,7 +28,7 @@ const MOD_HOOK_PACK_NAME := "mod-hooks.zip"
 # Set to true to require using "--enable-mods" to enable them
 const REQUIRE_CMD_LINE := false
 
-const LOG_NAME = "ModLoader:Store"
+const LOG_NAME := "ModLoader:Store"
 
 # Vars
 # =============================================================================
