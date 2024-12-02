@@ -17,7 +17,7 @@ Importantly, it provides methods to change existing scripts, scenes, and resourc
   - Makes every script and resource moddable
   - Vanilla game files are not shared in mods
   - Disabled mods leave no trace
-  - since Godot 4: workaround to mod scripts using class_name
+  - since Godot 4: workaround to mod scripts using `class_name`
   - Mod metadata
     - Compatibility checks between game and mod version
     - Load order/dependencies between mods 
