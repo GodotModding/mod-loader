@@ -3,8 +3,7 @@ extends Object
 ##
 ## Class for managing per-mod configurations.
 ##
-## @tutorial(Creating a Mod Config Schema with JSON-Schemas): 	https://github.com/GodotModding/godot-mod-loader/wiki/Mod-Configs
-## @tutorial(Config Schema):									https://github.com/GodotModding/godot-mod-loader/wiki/config-json
+## @tutorial(Creating a Mod Config Schema with JSON-Schemas): 	https://wiki.godotmodding.com/guides/modding/config_json/
 
 const LOG_NAME := "ModLoader:Config"
 const DEFAULT_CONFIG_NAME  := "default"

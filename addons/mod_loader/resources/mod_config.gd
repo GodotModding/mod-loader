@@ -4,8 +4,7 @@ extends Resource
 ## This Class is used to represent a configuration for a mod.[br]
 ## The Class provides functionality to initialize, validate, save, and remove a mod's configuration.
 ##
-## @tutorial(Creating a Mod Config Schema with JSON-Schemas): 	https://github.com/GodotModding/godot-mod-loader/wiki/Mod-Configs
-## @tutorial(Config Schema):									https://github.com/GodotModding/godot-mod-loader/wiki/config-json
+## @tutorial(Creating a Mod Config Schema with JSON-Schemas): 	https://wiki.godotmodding.com/guides/modding/config_json/
 
 
 const LOG_NAME := "ModLoader:ModConfig"
