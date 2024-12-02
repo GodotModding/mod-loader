@@ -10,7 +10,7 @@ const LOG_NAME := "ModLoader:ModHookPreProcessor"
 const REQUIRE_EXPLICIT_ADDITION := false
 const METHOD_PREFIX := "vanilla_"
 const HASH_COLLISION_ERROR := \
-	"MODDING EXPORT ERROR: Hash collision between %s and %s. The collision can be resolved by renaming one of the methods or changing their script's path."
+	"MODDING HOOKS ERROR: Hash collision between %s and %s. The collision can be resolved by renaming one of the methods or changing their script's path."
 const MOD_LOADER_HOOKS_START_STRING := \
 	"\n# ModLoader Hooks - The following code has been automatically added by the Godot Mod Loader."
 
@@ -23,10 +23,13 @@ var regex_getter_setter := RegEx.create_from_string("(.*?[sg]et\\s*=\\s*)(\\w+)(
 ## returns only the super word, excluding the (, as match to make substitution easier
 var regex_super_call := RegEx.create_from_string("\\bsuper(?=\\s*\\()")
 
-## matches the indented function body
-## needs to start from the : of a function definition to work (offset)
-## the body of a function is every line that is empty or starts with an indent or comment
+## Matches the indented function body.
+## Needs to start from the : of a function declaration to work (.search() offset param)
+## The body of a function is every line that is empty or starts with an indent or comment
 var regex_func_body := RegEx.create_from_string("(?smn)\\N*(\\n^(([\\t #]+\\N*)|$))*")
+
+## Just await between word boundaries
+var regex_keyword_await := RegEx.create_from_string("\\bawait\\b")
 
 
 var hashmap := {}
@@ -56,7 +59,7 @@ func process_script(path: String, enable_hook_check := false) -> String:
 	var class_prefix := str(hash(path))
 	var method_store: Array[String] = []
 
-	var getters_setters := collect_getters_and_setters(source_code, regex_getter_setter)
+	var getters_setters := collect_getters_and_setters(source_code)
 
 	var moddable_methods := current_script.get_script_method_list().filter(
 		is_func_moddable.bind(source_code, getters_setters)
@@ -68,30 +71,48 @@ func process_script(path: String, enable_hook_check := false) -> String:
 
 		var type_string := get_return_type_string(method.return)
 		var is_static := true if method.flags == METHOD_FLAG_STATIC + METHOD_FLAG_NORMAL else false
+
+		var func_def: RegExMatch = match_func_with_whitespace(method.name, source_code)
+		if not func_def: # Could not regex match a function with that name
+			continue # Means invalid Script, should never happen
+
+		# Processing does not cover methods in subclasses yet.
+		# If a function with the same name was found in a subclass,
+		# try again until we find the top level one
+		var max_loop := 1000
+		while not is_top_level_func(source_code, func_def.get_start(), is_static): # indent before "func"
+			func_def = match_func_with_whitespace(method.name, source_code, func_def.get_end())
+			if not func_def or max_loop <= 0: # Couldn't match any func like before
+				break # Means invalid Script, should never happen
+			max_loop -= 1
+
+		var func_body_start_index := get_func_body_start_index(func_def.get_end(), source_code)
+		if func_body_start_index == -1: # The function is malformed, opening ( was not closed by )
+			continue # Means invalid Script, should never happen
+
+		var func_body := match_method_body(method.name, func_body_start_index, source_code)
+		if not func_body: # No indented lines found
+			continue # Means invalid Script, should never happen
+
+		var is_async := is_func_async(func_body.get_string())
 		var method_arg_string_with_defaults_and_types := get_function_parameters(method.name, source_code, is_static)
 		var method_arg_string_names_only := get_function_arg_name_string(method.args)
 
-		var hash_before := _ModLoaderHooks.get_hook_hash(path, method.name, true)
-		var hash_after := _ModLoaderHooks.get_hook_hash(path, method.name, false)
-		var hash_before_data := [path, method.name, true]
-		var hash_after_data := [path, method.name, false]
-		if hashmap.has(hash_before):
-			push_error(HASH_COLLISION_ERROR%[hashmap[hash_before], hash_before_data])
-		if hashmap.has(hash_after):
-			push_error(HASH_COLLISION_ERROR %[hashmap[hash_after], hash_after_data])
-		hashmap[hash_before] = hash_before_data
-		hashmap[hash_after] = hash_after_data
+		var hook_id := _ModLoaderHooks.get_hook_hash(path, method.name)
+		var hook_id_data := [path, method.name, true]
+		if hashmap.has(hook_id):
+			push_error(HASH_COLLISION_ERROR%[hashmap[hook_id], hook_id_data])
+		hashmap[hook_id] = hook_id_data
 
-		var mod_loader_hook_string := get_mod_loader_hook(
+		var mod_loader_hook_string := build_mod_hook_string(
 			method.name,
 			method_arg_string_names_only,
 			method_arg_string_with_defaults_and_types,
 			type_string,
 			method.return.usage,
 			is_static,
-			path,
-			hash_before,
-			hash_after,
+			is_async,
+			hook_id,
 			METHOD_PREFIX + class_prefix,
 			enable_hook_check
 		)
@@ -104,15 +125,14 @@ func process_script(path: String, enable_hook_check := false) -> String:
 		method_store.push_back(method.name)
 		source_code = edit_vanilla_method(
 			method.name,
-			is_static,
 			source_code,
-			regex_func_body,
-			regex_super_call,
+			func_def,
+			func_body,
 			METHOD_PREFIX + class_prefix
 		)
 		source_code_additions += "\n%s" % mod_loader_hook_string
 
-	#if we have some additions to the code, append them at the end
+	# If we have some additions to the code, append them at the end
 	if source_code_additions != "":
 		source_code = "%s\n%s\n%s" % [source_code, MOD_LOADER_HOOKS_START_STRING, source_code_additions]
 
@@ -131,6 +151,65 @@ static func is_func_moddable(method: Dictionary, source_code: String, getters_se
 		return false
 
 	return true
+
+
+func is_func_async(func_body_text: String) -> bool:
+	if not func_body_text.contains("await"):
+		return false
+
+	var lines := func_body_text.split("\n")
+	var in_multiline_string := false
+	var current_multiline_delimiter := ""
+
+	for line: String in lines:
+		var char_index := 0
+		while char_index < line.length():
+			if in_multiline_string:
+				# Check if we are exiting the multiline string
+				if line.substr(char_index).begins_with(current_multiline_delimiter):
+					in_multiline_string = false
+					char_index += 3
+				else:
+					char_index += 1
+				continue
+
+			# Comments: Skip the rest of the line
+			if line.substr(char_index).begins_with("#"):
+				break
+
+			# Check for multiline string start
+			if line.substr(char_index).begins_with('"""') or line.substr(char_index).begins_with("'''"):
+				in_multiline_string = true
+				current_multiline_delimiter = line.substr(char_index, 3)
+				char_index += 3
+				continue
+
+			# Check for single-quoted strings
+			if line[char_index] == '"' or line[char_index] == "'":
+				var delimiter = line[char_index]
+				char_index += 1
+				while char_index < line.length() and line[char_index] != delimiter:
+					# Skip escaped quotes
+					if line[char_index] == "\\":
+						char_index += 1
+					char_index += 1
+				char_index += 1  # Skip the closing quote
+				continue
+
+			# Check for the "await" keyword
+			if not line.substr(char_index).begins_with("await"):
+				char_index += 1
+				continue
+
+			# Ensure "await" is a standalone word
+			var start := char_index -1 if char_index > 0 else 0
+			if regex_keyword_await.search(line.substr(start)):
+				return true # Just return here, we don't need every occurence
+				# i += 5  # Normal parser: Skip the keyword
+			else:
+				char_index += 1
+
+	return false
 
 
 static func get_function_arg_name_string(args: Array) -> String:
@@ -198,105 +277,81 @@ static func get_closing_paren_index(opening_paren_index: int, text: String) -> i
 	return closing_paren_index
 
 
-static func edit_vanilla_method(
+func edit_vanilla_method(
 	method_name: String,
-	is_static: bool,
 	text: String,
-	regex_func_body: RegEx,
-	regex_super_call: RegEx,
+	func_def: RegExMatch,
+	func_body: RegExMatch,
 	prefix := METHOD_PREFIX,
-	offset := 0
 ) -> String:
-	var func_def := match_func_with_whitespace(method_name, text, offset)
-
-	if not func_def:
-		return text
-
-	if not is_top_level_func(text, func_def.get_start(), is_static):
-		return edit_vanilla_method(
-				method_name,
-				is_static,
-				text,
-				regex_func_body,
-				regex_super_call,
-				prefix,
-				func_def.get_end()
-			)
-
-	text = fix_method_super(method_name, func_def.get_end(), text, regex_func_body, regex_super_call)
+	text = fix_method_super(method_name, func_body, text)
 	text = text.erase(func_def.get_start(), func_def.get_end() - func_def.get_start())
 	text = text.insert(func_def.get_start(), "func %s_%s(" % [prefix, method_name])
 
 	return text
 
 
-static func fix_method_super(method_name: String, func_def_end: int, text: String, regex_func_body: RegEx, regex_super_call: RegEx, offset := 0) -> String:
-	# Shift the func_def_end index back by one to start on the opening parentheses.
-	# Because the match_func_with_whitespace().get_end() is the index after the opening parentheses.
-	var closing_paren_index := get_closing_paren_index(func_def_end - 1, text)
-	if closing_paren_index == -1:
-		return text
-	var func_body_start_index := text.find(":", closing_paren_index) +1
-
-	var func_body := regex_func_body.search(text, func_body_start_index)
-	if not func_body:
-		return text
-	var func_body_end_index := func_body.get_end()
-
-	text = regex_super_call.sub(
+func fix_method_super(method_name: String, func_body: RegExMatch, text: String) -> String:
+	return regex_super_call.sub(
 		text, "super.%s" % method_name,
-		true, func_body_start_index, func_body_end_index
+		true, func_body.get_start(), func_body.get_end()
 	)
 
-	return text
+
+static func get_func_body_start_index(func_def_end: int, source_code: String) -> int:
+	# Shift the func_def_end index back by one to start on the opening parentheses.
+	# Because the match_func_with_whitespace().get_end() is the index after the opening parentheses.
+	var closing_paren_index := get_closing_paren_index(func_def_end - 1, source_code)
+	if closing_paren_index == -1:
+		return -1
+	return source_code.find(":", closing_paren_index) +1
+
+
+func match_method_body(method_name: String, func_body_start_index: int, text: String) -> RegExMatch:
+	return regex_func_body.search(text, func_body_start_index)
 
 
 static func match_func_with_whitespace(method_name: String, text: String, offset := 0) -> RegExMatch:
+	# Dynamically create the new regex for that specific name
 	var func_with_whitespace := RegEx.create_from_string("func\\s+%s\\s*\\(" % method_name)
-
-	# Search for the function definition
 	return func_with_whitespace.search(text, offset)
 
 
-static func get_mod_loader_hook(
+static func build_mod_hook_string(
 	method_name: String,
 	method_arg_string_names_only: String,
 	method_arg_string_with_defaults_and_types: String,
 	method_type: String,
 	return_prop_usage: int,
 	is_static: bool,
-	script_path: String,
-	hash_before: int,
-	hash_after: int,
+	is_async: bool,
+	hook_id: int,
 	method_prefix := METHOD_PREFIX,
 	enable_hook_check := false,
 ) -> String:
 	var type_string := " -> %s" % method_type if not method_type.is_empty() else ""
 	var static_string := "static " if is_static else ""
-	# Cannot use "self" inside a static function.
-	var self_string := "null" if is_static else "self"
+	var await_string := "await " if is_async else ""
+	var async_string := "_async" if is_async else ""
 	var return_var := "var %s = " % "return_var" if not method_type.is_empty() or return_prop_usage == 131072 else ""
-	var method_return := "return %s" % "return_var" if not method_type.is_empty() or return_prop_usage == 131072 else ""
+	var method_return := "return " if not method_type.is_empty() or return_prop_usage == 131072 else ""
 	var hook_check := 'if ModLoaderStore.get("any_mod_hooked") and ModLoaderStore.any_mod_hooked:\n\t\t' if enable_hook_check else ""
 
 	return """
 {STATIC}func {METHOD_NAME}({METHOD_PARAMS}){RETURN_TYPE_STRING}:
-	{HOOK_CHECK}_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_BEFORE})
-	{METHOD_RETURN_VAR}{METHOD_PREFIX}_{METHOD_NAME}({METHOD_ARGS})
-	{HOOK_CHECK}_ModLoaderHooks.call_hooks({SELF}, [{METHOD_ARGS}], {HOOK_ID_AFTER})
-	{METHOD_RETURN}""".format({
+	{HOOK_CHECK}{METHOD_RETURN}{AWAIT}_ModLoaderHooks.call_hooks{ASYNC}({METHOD_PREFIX}_{METHOD_NAME}, [{METHOD_ARGS}], {HOOK_ID})
+""".format({
 		"METHOD_PREFIX": method_prefix,
 		"METHOD_NAME": method_name,
 		"METHOD_PARAMS": method_arg_string_with_defaults_and_types,
 		"RETURN_TYPE_STRING": type_string,
 		"METHOD_ARGS": method_arg_string_names_only,
-		"SCRIPT_PATH": script_path,
 		"METHOD_RETURN_VAR": return_var,
 		"METHOD_RETURN": method_return,
 		"STATIC": static_string,
-		"SELF": self_string,
-		"HOOK_ID_BEFORE": hash_before,
-		"HOOK_ID_AFTER": hash_after,
+		"AWAIT": await_string,
+		"ASYNC": async_string,
+		"HOOK_ID": hook_id,
 		"HOOK_CHECK": hook_check,
 	})
 
@@ -370,7 +425,7 @@ static func get_return_type_string(return_data: Dictionary) -> String:
 	return "%s%s" % [type_base, type_hint]
 
 
-static func collect_getters_and_setters(text: String, regex_getter_setter: RegEx) -> Dictionary:
+func collect_getters_and_setters(text: String) -> Dictionary:
 	var result := {}
 	# a valid match has 2 or 4 groups, split into the method names and the rest of the line
 	# (var example: set = )(example_setter)(, get = )(example_getter)
