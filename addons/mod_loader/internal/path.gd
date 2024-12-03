@@ -6,7 +6,8 @@ extends RefCounted
 # Currently all of the included functions are internal and should only be used by the mod loader itself.
 
 const LOG_NAME := "ModLoader:Path"
-const MOD_CONFIG_DIR_PATH := "user://configs"
+const MOD_CONFIG_DIR_PATH := "user://mod_configs"
+const MOD_CONFIG_DIR_PATH_OLD := "user://configs"
 
 
 # Get the path to a local folder. Primarily used to get the  (packed) mods
@@ -178,6 +179,8 @@ static func get_unpacked_mods_dir_path() -> String:
 
 # Get the path to the configs folder, with any applicable overrides applied
 static func get_path_to_configs() -> String:
+	if _ModLoaderFile.dir_exists(MOD_CONFIG_DIR_PATH_OLD):
+		handle_mod_config_path_deprecation()
 	var configs_path := MOD_CONFIG_DIR_PATH
 	if ModLoaderStore:
 		if ModLoaderStore.ml_options.override_path_to_configs:
@@ -229,3 +232,13 @@ static func get_mod_dir(path: String) -> String:
 	var found_string: String = path.substr(start_index, end_index - start_index)
 
 	return found_string
+
+
+static func handle_mod_config_path_deprecation() -> void:
+	ModLoaderDeprecated.deprecated_message("The mod config path has been moved to \"%s\".
+	The Mod Loader will attempt to rename the config directory." % MOD_CONFIG_DIR_PATH, "7.0.0")
+	var error := DirAccess.rename_absolute(MOD_CONFIG_DIR_PATH_OLD, MOD_CONFIG_DIR_PATH)
+	if not error == OK:
+		ModLoaderLog.error("Failed to rename the config directory with error \"%s\"." % [error_string(error)], LOG_NAME)
+	else:
+		ModLoaderLog.success("Successfully renamed config directory to \"%s\"." % MOD_CONFIG_DIR_PATH, LOG_NAME)
