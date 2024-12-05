@@ -196,7 +196,13 @@ static func file_exists(path: String, zip_path: String = "") -> bool:
 	if not zip_path.is_empty():
 		return file_exists_in_zip(path, zip_path)
 
-	return FileAccess.file_exists(path)
+	var exists := FileAccess.file_exists(path)
+
+	# If the file is not found, check if it has been remapped because it is a Resource.
+	if not exists:
+		exists = ResourceLoader.exists(path)
+
+	return exists
 
 
 static func dir_exists(path: String) -> bool:
