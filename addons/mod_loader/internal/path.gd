@@ -68,9 +68,7 @@ static func get_steam_workshop_id(zip_path: String) -> String:
 	return zip_path.get_base_dir().split("/")[-1]
 
 
-# Get a flat array of all files in the target directory. This was needed in the
-# original version of this script, before becoming deprecated. It may still be
-# used if DEBUG_ENABLE_STORING_FILEPATHS is true.
+# Get a flat array of all files in the target directory.
 # Source: https://gist.github.com/willnationsdev/00d97aa8339138fd7ef0d6bd42748f6e
 static func get_flat_view_dict(p_dir := "res://", p_match := "", p_match_is_regex := false) -> PackedStringArray:
 	var data: PackedStringArray = []
@@ -167,10 +165,32 @@ static func get_dir_paths_in_dir(src_dir_path: String) -> Array:
 # Get the path to the mods folder, with any applicable overrides applied
 static func get_path_to_mods() -> String:
 	var mods_folder_path := get_local_folder_dir("mods")
+
 	if ModLoaderStore:
 		if ModLoaderStore.ml_options.override_path_to_mods:
 			mods_folder_path = ModLoaderStore.ml_options.override_path_to_mods
 	return mods_folder_path
+
+
+static func get_mod_paths_from_all_sources() -> Array[String]:
+	var mod_ids: Array[String] = []
+
+	if OS.has_feature("editor"):
+		var mod_dirs := DirAccess.get_directories_at(get_unpacked_mods_dir_path())
+		mod_ids.append_array(mod_dirs)
+
+	if ModLoaderStore.ml_options.load_from_local:
+		mod_ids.append_array(DirAccess.get_directories_at(get_path_to_mods()))
+
+	if ModLoaderStore.ml_options.load_from_steam_workshop:
+		mod_ids.append_array(_ModLoaderSteam.find_steam_workshop_zips())
+
+
+	return mod_ids
+
+
+static func get_path_to_mod_manifest(mod_id: String) -> String:
+	return get_path_to_mods().path_join(mod_id).path_join("manifest.json")
 
 
 static func get_unpacked_mods_dir_path() -> String:
@@ -232,6 +252,11 @@ static func get_mod_dir(path: String) -> String:
 	var found_string: String = path.substr(start_index, end_index - start_index)
 
 	return found_string
+
+
+# Checks if the path ends with .zip
+static func is_zip(path: String) -> bool:
+	return path.get_extension() == "zip"
 
 
 static func handle_mod_config_path_deprecation() -> void:

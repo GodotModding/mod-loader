@@ -7,15 +7,19 @@ extends Resource
 
 const LOG_NAME := "ModLoader:ModData"
 
+const MOD_MAIN := "mod_main.gd"
+const MANIFEST := "manifest.json"
+const OVERWRITES := "overwrites.gd"
+
 # These 2 files are always required by mods.
 # [i]mod_main.gd[/i] = The main init file for the mod
 # [i]manifest.json[/i] = Meta data for the mod, including its dependencies
-enum required_mod_files {
+enum RequiredModFiles {
 	MOD_MAIN,
 	MANIFEST,
 }
 
-enum optional_mod_files {
+enum OptionalModFiles {
 	OVERWRITES
 }
 
@@ -23,7 +27,7 @@ enum optional_mod_files {
 # UNPACKED = From the mods-unpacked directory ( only when in the editor ).
 # LOCAL = From the local mod zip directory, which by default is ../game_dir/mods.
 # STEAM_WORKSHOP = Loaded from ../Steam/steamapps/workshop/content/1234567/[..].
-enum sources {
+enum Sources {
 	UNPACKED,
 	LOCAL,
 	STEAM_WORKSHOP,
@@ -58,97 +62,28 @@ var current_config: ModConfig: set = _set_current_config
 ## Specifies the source from which the mod has been loaded
 var source: int
 
-# only set if DEBUG_ENABLE_STORING_FILEPATHS is enabled
-var file_paths: PackedStringArray = []
-
 var load_errors: Array[String] = []
 var load_warnings: Array[String] = []
 
 
-func _init(mod_id: String, _zip_path := "") -> void:
-	# Path to the mod in UNPACKED_DIR (eg "res://mods-unpacked/My-Mod")
-	var local_mod_path := _ModLoaderPath.get_unpacked_mods_dir_path().path_join(mod_id)
 
-	if not _zip_path.is_empty():
-		zip_name = _ModLoaderPath.get_file_name_from_path(_zip_path)
-		zip_path = _zip_path
-		source = get_mod_source()
-	dir_path = local_mod_path
-	dir_name = mod_id
+func _init(_manifest: ModManifest, path: String) -> void:
+	manifest = _manifest
 
-	var mod_overwrites_path := get_optional_mod_file_path(ModData.optional_mod_files.OVERWRITES)
-	is_overwrite = _ModLoaderFile.file_exists(mod_overwrites_path, zip_path)
-	is_locked = mod_id in ModLoaderStore.ml_options.locked_mods
+	if _ModLoaderPath.is_zip(path):
+		zip_name = _ModLoaderPath.get_file_name_from_path(path)
+		zip_path = path
 
-	# Get the mod file paths
-	# Note: This was needed in the original version of this script, but it's
-	# not needed anymore. It can be useful when debugging, but it's also an expensive
-	# operation if a mod has a large number of files (eg. Brotato's Invasion mod,
-	# which has ~1,000 files). That's why it's disabled by default
-	if ModLoaderStore.DEBUG_ENABLE_STORING_FILEPATHS:
-		file_paths = _ModLoaderPath.get_flat_view_dict(local_mod_path)
+	dir_path = _ModLoaderPath.get_unpacked_mods_dir_path().path_join(manifest.get_mod_id())
+	# Note: Changed this so we can validate that the dir and the mod_id in the manifest are the same.
+	dir_name = path.split("/")[-1]
+	source = get_mod_source()
 
+	_has_required_files()
+	_is_mod_dir_name_same_as_id(manifest)
 
-# Load meta data from a mod's manifest.json file
-func load_manifest() -> void:
-	if not _has_required_files():
-		return
-
-	ModLoaderLog.info("Loading mod_manifest (manifest.json) for -> %s" % dir_name, LOG_NAME)
-
-	# Load meta data file
-	var manifest_path := get_required_mod_file_path(required_mod_files.MANIFEST)
-	var manifest_dict := _ModLoaderFile.get_json_as_dict(manifest_path)
-
-	var mod_manifest := ModManifest.new(manifest_dict)
-	manifest = mod_manifest
-	validate_manifest_loadability()
-
-
-func validate_loadability() -> void:
-	var is_manifest_loadable := validate_manifest_loadability()
-	if not is_manifest_loadable:
-		return
-	manifest.validate_workshop_id(self)
-	validate_game_version_compatibility(ModLoaderStore.ml_options.semantic_version)
-
-	is_loadable = load_errors.is_empty()
-
-
-func validate_game_version_compatibility(game_semver: String) -> void:
-	var game_major := int(game_semver.get_slice(".", 0))
-	var game_minor := int(game_semver.get_slice(".", 1))
-
-	var valid_major := false
-	var valid_minor := false
-	for version in manifest.compatible_game_version:
-		var compat_major := int(version.get_slice(".", 0))
-		var compat_minor := int(version.get_slice(".", 1))
-		if compat_major < game_major:
-			continue
-		valid_major = true
-
-		if compat_minor < game_minor:
-			continue
-		valid_minor = true
-
-	if not valid_major:
-		load_errors.append("This mod is incompatible with the current game version. (Current: %s, Compatible: %s)"
-			% [game_semver, ", ".join(manifest.compatible_game_version)]
-		)
-	if not valid_minor:
-		load_warnings.append("This mod may not be compatible with the current game version. Enable at your own risk.")
-
-
-func validate_manifest_loadability() -> bool:
-	if not _has_manifest(manifest):
-		load_errors.append("This mod could not be loaded due to a manifest error. Contact the mod developer.")
-		return false
-
-	if not _is_mod_dir_name_same_as_id(manifest):
-		load_errors.append("This mod could not be loaded due to a structural error. Contact the mod developer.")
-		return false
-	return true
+	is_overwrite = _is_overwrite()
+	is_locked = manifest.get_mod_id() in ModLoaderStore.ml_options.locked_mods
 
 
 # Load each mod config json from the mods config directory.
@@ -220,51 +155,51 @@ func set_mod_state(should_activate: bool, force := false) -> bool:
 func _is_mod_dir_name_same_as_id(mod_manifest: ModManifest) -> bool:
 	var manifest_id := mod_manifest.get_mod_id()
 	if not dir_name == manifest_id:
-		ModLoaderLog.fatal('Mod directory name "%s" does not match the data in manifest.json. Expected "%s" (Format: {namespace}-{name})' % [ dir_name, manifest_id ], LOG_NAME)
+		load_errors.push_back('Mod directory name "%s" does not match the data in manifest.json. Expected "%s" (Format: {namespace}-{name})' % [ dir_name, manifest_id ])
 		return false
 	return true
+
+
+func _is_overwrite() -> bool:
+	return _ModLoaderFile.file_exists(get_optional_mod_file_path(OptionalModFiles.OVERWRITES), zip_path)
 
 
 # Confirms that all files from [member required_mod_files] exist
 func _has_required_files() -> bool:
-	for required_file in required_mod_files:
-		var file_path := get_required_mod_file_path(required_mod_files[required_file])
+	var has_required_files := true
 
-		if not _ModLoaderFile.file_exists(file_path):
-			ModLoaderLog.fatal("ERROR - %s is missing a required file: %s" % [dir_name, file_path], LOG_NAME)
-			is_loadable = false
-	return is_loadable
+	for required_file in RequiredModFiles:
+		var required_file_path := get_required_mod_file_path(RequiredModFiles[required_file])
 
+		if not _ModLoaderFile.file_exists(required_file_path, zip_path):
+			load_errors.push_back("ERROR - %s is missing a required file: %s" % [dir_name, required_file_path])
+			has_required_files = false
 
-# Validates if manifest is set
-func _has_manifest(mod_manifest: ModManifest) -> bool:
-	if mod_manifest == null:
-		ModLoaderLog.fatal("Mod manifest could not be created correctly due to errors.", LOG_NAME)
-		return false
-	return true
+	return has_required_files
 
 
-# Converts enum indices [member required_mod_files] into their respective file paths
-func get_required_mod_file_path(required_file: required_mod_files) -> String:
+# Converts enum indices [member RequiredModFiles] into their respective file paths
+# All required mod files should be in the root of the mod directory
+func get_required_mod_file_path(required_file: RequiredModFiles) -> String:
 	match required_file:
-		required_mod_files.MOD_MAIN:
-			return dir_path.path_join("mod_main.gd")
-		required_mod_files.MANIFEST:
-			return dir_path.path_join("manifest.json")
+		RequiredModFiles.MOD_MAIN:
+			return dir_path.path_join(MOD_MAIN)
+		RequiredModFiles.MANIFEST:
+			return dir_path.path_join(MANIFEST)
 	return ""
 
 
-func get_optional_mod_file_path(optional_file: optional_mod_files) -> String:
+func get_optional_mod_file_path(optional_file: OptionalModFiles) -> String:
 	match optional_file:
-		optional_mod_files.OVERWRITES:
-			return dir_path.path_join("overwrites.gd")
+		OptionalModFiles.OVERWRITES:
+			return dir_path.path_join(OVERWRITES)
 	return ""
 
 
-func get_mod_source() -> sources:
+func get_mod_source() -> Sources:
 	if zip_path.contains("workshop"):
-		return sources.STEAM_WORKSHOP
+		return Sources.STEAM_WORKSHOP
 	if zip_path == "":
-		return sources.UNPACKED
+		return Sources.UNPACKED
 
-	return sources.LOCAL
+	return Sources.LOCAL

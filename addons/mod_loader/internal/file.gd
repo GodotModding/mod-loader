@@ -194,7 +194,7 @@ static func remove_file(file_path: String) -> bool:
 
 static func file_exists(path: String, zip_path: String = "") -> bool:
 	if not zip_path.is_empty():
-		return file_exists_in_zip(path, zip_path)
+		return file_exists_in_zip(zip_path, path)
 
 	var exists := FileAccess.file_exists(path)
 
@@ -209,7 +209,7 @@ static func dir_exists(path: String) -> bool:
 	return DirAccess.dir_exists_absolute(path)
 
 
-static func file_exists_in_zip(path: String, zip_path: String = "") -> bool:
+static func file_exists_in_zip(zip_path: String, path: String) -> bool:
 	var reader := zip_reader_open(zip_path)
 	if not reader:
 		return false
@@ -225,10 +225,14 @@ static func zip_reader_open(zip_path) -> ZIPReader:
 	return reader
 
 
-# Internal util functions
-# =============================================================================
-# These are duplicates of the functions in mod_loader_utils.gd to prevent
-# a cyclic reference error.
+static func load_manifest_file(path: String) -> Dictionary:
+	ModLoaderLog.debug("Loading mod_manifest from -> %s" % path, LOG_NAME)
+
+	if _ModLoaderPath.is_zip(path):
+		return get_json_as_dict_from_zip(path, ModData.MANIFEST)
+
+	return get_json_as_dict(path.path_join(ModData.MANIFEST))
+
 
 # This is a dummy func. It is exclusively used to show notes in the code that
 # stay visible after decompiling a PCK, as is primarily intended to assist new

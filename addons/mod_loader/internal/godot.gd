@@ -9,10 +9,31 @@ const LOG_NAME := "ModLoader:Godot"
 const AUTOLOAD_CONFIG_HELP_MSG := "To configure your autoloads, go to Project > Project Settings > Autoload."
 
 
+# Check autoload positions:
+# Ensure 1st autoload is `ModLoaderStore`, and 2nd is `ModLoader`.
+static func check_autoload_positions() -> void:
+	var override_cfg_path := _ModLoaderPath.get_override_path()
+	var is_override_cfg_setup :=  _ModLoaderFile.file_exists(override_cfg_path)
+	# If the override file exists we assume the ModLoader was setup with the --setup-create-override-cfg cli arg
+	# In that case the ModLoader will be the last entry in the autoload array
+	if is_override_cfg_setup:
+		ModLoaderLog.info("override.cfg setup detected, ModLoader will be the last autoload loaded.", LOG_NAME)
+		return
+
+	# If there are Autoloads that need to be before the ModLoader
+	# "allow_modloader_autoloads_anywhere" in the ModLoader Options can be enabled.
+	# With that only the correct order of, ModLoaderStore first and ModLoader second, is checked.
+	if ModLoaderStore.ml_options.allow_modloader_autoloads_anywhere:
+		_ModLoaderGodot.is_autoload_before("ModLoaderStore", "ModLoader", true)
+	else:
+		var _pos_ml_store := _ModLoaderGodot.check_autoload_position("ModLoaderStore", 0, true)
+		var _pos_ml_core := _ModLoaderGodot.check_autoload_position("ModLoader", 1, true)
+
+
 # Check if autoload_name_before is before autoload_name_after
 # Returns a bool if the position does not match.
 # Optionally triggers a fatal error
-static func check_autoload_order(autoload_name_before: String, autoload_name_after: String, trigger_error := false) -> bool:
+static func is_autoload_before(autoload_name_before: String, autoload_name_after: String, trigger_error := false) -> bool:
 	var autoload_name_before_index := get_autoload_index(autoload_name_before)
 	var autoload_name_after_index := get_autoload_index(autoload_name_after)
 

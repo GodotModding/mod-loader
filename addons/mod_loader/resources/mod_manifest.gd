@@ -41,6 +41,11 @@ var image: CompressedTexture2D
 ## only used for information
 var steam_workshop_id := ""
 
+var validation_messages_error : Array[String] = []
+var validation_messages_warning : Array[String] = []
+
+var is_valid := false
+
 # Required keys in a mod's manifest.json file
 const REQUIRED_MANIFEST_KEYS_ROOT = [
 	"name",
@@ -62,28 +67,26 @@ const REQUIRED_MANIFEST_KEYS_EXTRA = [
 
 # Takes the manifest as [Dictionary] and validates everything.
 # Will return null if something is invalid.
-func _init(manifest: Dictionary) -> void:
-	if (
-		not ModLoaderUtils.dict_has_fields(manifest, REQUIRED_MANIFEST_KEYS_ROOT) or
-		not ModLoaderUtils.dict_has_fields(manifest.extra, ["godot"]) or
-		not ModLoaderUtils.dict_has_fields(manifest.extra.godot, REQUIRED_MANIFEST_KEYS_EXTRA)
-	):
-		return
+func _init(manifest: Dictionary, path: String) -> void:
+	var missing_fields: Array[String]
+
+	missing_fields.push_back(ModLoaderUtils.get_missing_dict_fields(manifest, REQUIRED_MANIFEST_KEYS_ROOT))
+	missing_fields.push_back(ModLoaderUtils.get_missing_dict_fields(manifest.extra, ["godot"]))
+	missing_fields.push_back(ModLoaderUtils.get_missing_dict_fields(manifest.extra.godot, REQUIRED_MANIFEST_KEYS_EXTRA))
+
+	if not missing_fields.is_empty():
+		validation_messages_error.push_back("Manifest is missing required fields: %s" % str(missing_fields))
 
 	name = manifest.name
 	mod_namespace = manifest.namespace
 	version_number = manifest.version_number
 
-	if (
-		not is_name_or_namespace_valid(name) or
-		not is_name_or_namespace_valid(mod_namespace)
-	):
-		return
+	is_name_or_namespace_valid(name)
+	is_name_or_namespace_valid(mod_namespace)
 
 	var mod_id = get_mod_id()
 
-	if not is_semver_valid(mod_id, version_number, "version_number"):
-		return
+	is_semver_valid(mod_id, version_number, "version_number")
 
 	description = manifest.description
 	website_url = manifest.website_url
@@ -101,62 +104,36 @@ func _init(manifest: Dictionary) -> void:
 	config_schema = ModLoaderUtils.get_dict_from_dict(godot_details, "config_schema")
 	steam_workshop_id = ModLoaderUtils.get_string_from_dict(godot_details, "steam_workshop_id")
 
-	if (
-		not is_mod_id_array_valid(mod_id, dependencies, "dependency") or
-		not is_mod_id_array_valid(mod_id, incompatibilities, "incompatibility") or
-		not is_mod_id_array_valid(mod_id, optional_dependencies, "optional_dependency") or
-		not is_mod_id_array_valid(mod_id, load_before, "load_before")
-	):
-		return
+	_is_game_version_compatibility(mod_id)
 
-	if (
-		not validate_distinct_mod_ids_in_arrays(
-			mod_id,
-			dependencies,
-			incompatibilities,
-			["dependencies", "incompatibilities"]
-		) or
-		not validate_distinct_mod_ids_in_arrays(
-			mod_id,
-			optional_dependencies,
-			dependencies,
-			["optional_dependencies", "dependencies"]
-		) or
-		not validate_distinct_mod_ids_in_arrays(
-			mod_id,
-			optional_dependencies,
-			incompatibilities,
-			["optional_dependencies", "incompatibilities"]
-		) or
-		not validate_distinct_mod_ids_in_arrays(
-			mod_id,
-			load_before,
-			dependencies,
-			["load_before", "dependencies"],
-			"\"load_before\" should be handled as optional dependency adding it to \"dependencies\" will cancel out the desired effect."
-		) or
-		not validate_distinct_mod_ids_in_arrays(
-			mod_id,
-			load_before,
-			optional_dependencies,
-			["load_before", "optional_dependencies"],
-			"\"load_before\" can be viewed as optional dependency, please remove the duplicate mod-id."
-		) or
-		not validate_distinct_mod_ids_in_arrays(
-			mod_id,
-			load_before,
-			incompatibilities,
-			["load_before", "incompatibilities"])
-	):
-		return
+	is_mod_id_array_valid(mod_id, dependencies, "dependency")
+	is_mod_id_array_valid(mod_id, incompatibilities, "incompatibility")
+	is_mod_id_array_valid(mod_id, optional_dependencies, "optional_dependency")
+	is_mod_id_array_valid(mod_id, load_before, "load_before")
 
+	validate_distinct_mod_ids_in_arrays(mod_id, dependencies, incompatibilities, ["dependencies", "incompatibilities"])
+	validate_distinct_mod_ids_in_arrays(mod_id, optional_dependencies, dependencies, ["optional_dependencies", "dependencies"])
+	validate_distinct_mod_ids_in_arrays(mod_id, optional_dependencies, incompatibilities, ["optional_dependencies", "incompatibilities"])
+	validate_distinct_mod_ids_in_arrays(
+		mod_id,
+		load_before,
+		dependencies,
+		["load_before", "dependencies"],
+		"\"load_before\" should be handled as optional dependency adding it to \"dependencies\" will cancel out the desired effect."
+	)
+	validate_distinct_mod_ids_in_arrays(
+		mod_id,
+		load_before,
+		optional_dependencies,
+		["load_before", "optional_dependencies"],
+		"\"load_before\" can be viewed as optional dependency, please remove the duplicate mod-id."
+	)
+	validate_distinct_mod_ids_in_arrays(mod_id,load_before,incompatibilities,["load_before", "incompatibilities"])
 
-# validates the workshop id separately from the rest since it needs the ModData
-func validate_workshop_id(mod_data: ModData) -> void:
-	if not is_steam_workshop_id_valid(get_mod_id(), mod_data, steam_workshop_id):
-		# Attempt to update the steam_workshop_id with the correct one
-		if not _try_overriding_steam_workshop_id(get_mod_id(), mod_data):
-			return
+	_validate_workshop_id(path)
+
+	if validation_messages_error.is_empty():
+		is_valid = true
 
 
 # Mod ID used in the mod loader
@@ -309,12 +286,11 @@ func _handle_compatible_mod_loader_version(mod_id: String, godot_details: Dictio
 	# If an empty string was passed
 	if string_value == "":
 		# Using str() here because format strings caused an error
-		ModLoaderLog.fatal(
+		validation_messages_error.push_back(
 			str (
 				"%s - \"compatible_mod_loader_version\" is a required field." +
 				" For more details visit %s"
-			) % [mod_id, link_manifest_docs],
-			LOG_NAME)
+			) % [mod_id, link_manifest_docs])
 		return []
 
 	return [string_value]
@@ -323,25 +299,25 @@ func _handle_compatible_mod_loader_version(mod_id: String, godot_details: Dictio
 # A valid namespace may only use letters (any case), numbers and underscores
 # and has to be longer than 3 characters
 # a-z A-Z 0-9 _ (longer than 3 characters)
-static func is_name_or_namespace_valid(check_name: String, is_silent := false) -> bool:
+func is_name_or_namespace_valid(check_name: String, is_silent := false) -> bool:
 	var re := RegEx.new()
 	var _compile_error_1 = re.compile("^[a-zA-Z0-9_]*$") # alphanumeric and _
 
 	if re.search(check_name) == null:
 		if not is_silent:
-			ModLoaderLog.fatal("Invalid name or namespace: \"%s\". You may only use letters, numbers and underscores." % check_name, LOG_NAME)
+			validation_messages_error.push_back("Invalid name or namespace: \"%s\". You may only use letters, numbers and underscores." % check_name)
 		return false
 
 	var _compile_error_2 = re.compile("^[a-zA-Z0-9_]{3,}$") # at least 3 long
 	if re.search(check_name) == null:
 		if not is_silent:
-			ModLoaderLog.fatal("Invalid name or namespace: \"%s\". Must be longer than 3 characters." % check_name, LOG_NAME)
+			validation_messages_error.push_back("Invalid name or namespace: \"%s\". Must be longer than 3 characters." % check_name)
 		return false
 
 	return true
 
 
-static func is_semver_version_array_valid(mod_id: String, version_array: PackedStringArray, version_array_descripton: String, is_silent := false) -> bool:
+func is_semver_version_array_valid(mod_id: String, version_array: PackedStringArray, version_array_descripton: String, is_silent := false) -> bool:
 	var is_valid := true
 
 	for version in version_array:
@@ -354,38 +330,36 @@ static func is_semver_version_array_valid(mod_id: String, version_array: PackedS
 # A valid semantic version should follow this format: {mayor}.{minor}.{patch}
 # reference https://semver.org/ for details
 # {0-9}.{0-9}.{0-9} (no leading 0, shorter than 16 characters total)
-static func is_semver_valid(mod_id: String, check_version_number: String, field_name: String, is_silent := false) -> bool:
+func is_semver_valid(mod_id: String, check_version_number: String, field_name: String, is_silent := false) -> bool:
 	var re := RegEx.new()
 	var _compile_error = re.compile("^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$")
 
 	if re.search(check_version_number) == null:
 		if not is_silent:
 			# Using str() here because format strings caused an error
-			ModLoaderLog.fatal(
+			validation_messages_error.push_back(
 				str(
 					"Invalid semantic version: \"%s\" in field \"%s\" of mod \"%s\". " +
 					"You may only use numbers without leading zero and periods" +
 					"following this format {mayor}.{minor}.{patch}"
-				)  % [check_version_number, field_name, mod_id],
-				LOG_NAME
+				)  % [check_version_number, field_name, mod_id]
 			)
 		return false
 
 	if check_version_number.length() > 16:
 		if not is_silent:
-			ModLoaderLog.fatal(
+			validation_messages_error.push_back(
 				str(
 					"Invalid semantic version: \"%s\" in field \"%s\" of mod \"%s\". " +
 					"Version number must be shorter than 16 characters."
-				) % [check_version_number, field_name, mod_id],
-				LOG_NAME
+				) % [check_version_number, field_name, mod_id]
 			)
 		return false
 
 	return true
 
 
-static func validate_distinct_mod_ids_in_arrays(
+func validate_distinct_mod_ids_in_arrays(
 	mod_id: String,
 	array_one: PackedStringArray,
 	array_two: PackedStringArray,
@@ -407,12 +381,11 @@ static func validate_distinct_mod_ids_in_arrays(
 
 	# If any overlaps were found
 	if not is_silent:
-		ModLoaderLog.fatal(
+		validation_messages_error.push_back(
 			(
 				"The mod -> %s lists the same mod(s) -> %s - in \"%s\" and \"%s\". %s"
 				% [mod_id, overlaps, array_description[0], array_description[1], additional_info]
-			),
-			LOG_NAME
+			)
 		)
 		return false
 
@@ -420,7 +393,7 @@ static func validate_distinct_mod_ids_in_arrays(
 	return false
 
 
-static func is_mod_id_array_valid(own_mod_id: String, mod_id_array: PackedStringArray, mod_id_array_description: String, is_silent := false) -> bool:
+func is_mod_id_array_valid(own_mod_id: String, mod_id_array: PackedStringArray, mod_id_array_description: String, is_silent := false) -> bool:
 	var is_valid := true
 
 	# If there are mod ids
@@ -430,7 +403,7 @@ static func is_mod_id_array_valid(own_mod_id: String, mod_id_array: PackedString
 			if mod_id == own_mod_id:
 				is_valid = false
 				if not is_silent:
-					ModLoaderLog.fatal("The mod \"%s\" lists itself as \"%s\" in its own manifest.json file" % [mod_id, mod_id_array_description], LOG_NAME)
+					validation_messages_error.push_back("The mod \"%s\" lists itself as \"%s\" in its own manifest.json file" % [mod_id, mod_id_array_description])
 
 			# Check if the mod id is a valid mod id.
 			if not is_mod_id_valid(own_mod_id, mod_id, mod_id_array_description, is_silent):
@@ -439,20 +412,20 @@ static func is_mod_id_array_valid(own_mod_id: String, mod_id_array: PackedString
 	return is_valid
 
 
-static func is_mod_id_valid(original_mod_id: String, check_mod_id: String, type := "", is_silent := false) -> bool:
+func is_mod_id_valid(original_mod_id: String, check_mod_id: String, type := "", is_silent := false) -> bool:
 	var intro_text = "A %s for the mod \"%s\" is invalid: " % [type, original_mod_id] if not type == "" else ""
 
 	# contains hyphen?
 	if not check_mod_id.count("-") == 1:
 		if not is_silent:
-			ModLoaderLog.fatal(str(intro_text, "Expected a single hyphen in the mod ID, but the %s was: \"%s\"" % [type, check_mod_id]), LOG_NAME)
+			validation_messages_error.push_back(str(intro_text, "Expected a single hyphen in the mod ID, but the %s was: \"%s\"" % [type, check_mod_id]))
 		return false
 
 	# at least 7 long (1 for hyphen, 3 each for namespace/name)
 	var mod_id_length = check_mod_id.length()
 	if mod_id_length < 7:
 		if not is_silent:
-			ModLoaderLog.fatal(str(intro_text, "Mod ID for \"%s\" is too short. It must be at least 7 characters, but its length is: %s" % [check_mod_id, mod_id_length]), LOG_NAME)
+			validation_messages_error.push_back(str(intro_text, "Mod ID for \"%s\" is too short. It must be at least 7 characters, but its length is: %s" % [check_mod_id, mod_id_length]))
 		return false
 
 	var split = check_mod_id.split("-")
@@ -463,37 +436,43 @@ static func is_mod_id_valid(original_mod_id: String, check_mod_id: String, type 
 
 	if re.search(check_namespace) == null:
 		if not is_silent:
-			ModLoaderLog.fatal(str(intro_text, "Mod ID has an invalid namespace (author) for \"%s\". Namespace can only use letters, numbers and underscores, but was: \"%s\"" % [check_mod_id, check_namespace]), LOG_NAME)
+			validation_messages_error.push_back(str(intro_text, "Mod ID has an invalid namespace (author) for \"%s\". Namespace can only use letters, numbers and underscores, but was: \"%s\"" % [check_mod_id, check_namespace]))
 		return false
 
 	if re.search(check_name) == null:
 		if not is_silent:
-			ModLoaderLog.fatal(str(intro_text, "Mod ID has an invalid name for \"%s\". Name can only use letters, numbers and underscores, but was: \"%s\"" % [check_mod_id, check_name]), LOG_NAME)
+			validation_messages_error.push_back(str(intro_text, "Mod ID has an invalid name for \"%s\". Name can only use letters, numbers and underscores, but was: \"%s\"" % [check_mod_id, check_name]))
 		return false
 
 	return true
 
 
-static func is_string_length_valid(mod_id: String, field: String, string: String, required_length: int, is_silent := false) -> bool:
+func is_string_length_valid(mod_id: String, field: String, string: String, required_length: int, is_silent := false) -> bool:
 	if not string.length() == required_length:
 		if not is_silent:
-			ModLoaderLog.fatal("Invalid length in field \"%s\" of mod \"%s\" it should be \"%s\" but it is \"%s\"." % [field, mod_id, required_length, string.length()], LOG_NAME)
+			validation_messages_error.push_back("Invalid length in field \"%s\" of mod \"%s\" it should be \"%s\" but it is \"%s\"." % [field, mod_id, required_length, string.length()])
 		return false
 
 	return true
 
+# Validates the workshop id separately from the rest since it needs the ModData
+func _validate_workshop_id(path: String) -> void:
+	var steam_workshop_id_from_path := _ModLoaderPath.get_steam_workshop_id(path)
+	var is_mod_source_workshop := not steam_workshop_id_from_path.is_empty()
 
-static func is_steam_workshop_id_valid(mod_id: String, mod_data: ModData, steam_workshop_id_to_validate: String, is_silent := false) -> bool:
-	var mod_source := mod_data.get_mod_source()
-	var steam_workshop_id_from_path := ""
+	if not _is_steam_workshop_id_valid(get_mod_id(), steam_workshop_id_from_path, steam_workshop_id, is_mod_source_workshop):
+		# Override the invalid steam_workshop_id if we load from the workshop
+		if is_mod_source_workshop:
+			steam_workshop_id = steam_workshop_id_from_path
 
+
+func _is_steam_workshop_id_valid(mod_id: String, steam_workshop_id_from_path: String, steam_workshop_id_to_validate: String, is_mod_source_workshop := false, is_silent := false) -> bool:
 	if steam_workshop_id_to_validate.is_empty():
 		# Workshop id is optional, so we return true if no id is given
 		return true
 
 	# Validate the steam_workshop_id based on the zip_path if the mod is loaded from the workshop
-	if mod_source == ModData.sources.STEAM_WORKSHOP:
-		steam_workshop_id_from_path = _ModLoaderPath.get_steam_workshop_id(mod_data.zip_path)
+	if is_mod_source_workshop:
 		if not steam_workshop_id_to_validate == steam_workshop_id_from_path:
 			if not is_silent:
 				ModLoaderLog.warning("The \"steam_workshop_id\": \"%s\" provided by the mod manifest of mod \"%s\" is incorrect, it should be \"%s\"." % [steam_workshop_id_to_validate, mod_id, steam_workshop_id_from_path], LOG_NAME)
@@ -506,18 +485,37 @@ static func is_steam_workshop_id_valid(mod_id: String, mod_data: ModData, steam_
 	return true
 
 
-func _try_overriding_steam_workshop_id(mod_id: String, mod_data: ModData) -> bool:
-	var mod_source := mod_data.get_mod_source()
-	var steam_workshop_id_from_path := ""
+func _is_game_version_compatibility(mod_id: String) -> bool:
+	var game_version: String = ModLoaderStore.ml_options.semantic_version
+	var game_major := int(game_version.get_slice(".", 0))
+	var game_minor := int(game_version.get_slice(".", 1))
 
-	if not mod_source == ModData.sources.STEAM_WORKSHOP:
+	var valid_major := false
+	var valid_minor := false
+	for version in compatible_game_version:
+		var compat_major := int(version.get_slice(".", 0))
+		var compat_minor := int(version.get_slice(".", 1))
+		if compat_major < game_major:
+			continue
+		valid_major = true
+
+		if compat_minor < game_minor:
+			continue
+		valid_minor = true
+
+	if not valid_major:
+		validation_messages_error.push_back(
+			"The mod \"%s\" is incompatible with the current game version.
+			(current game version: %s, mod compatible with game versions: %s)" %
+			[mod_id, game_version, compatible_game_version]
+		)
 		return false
-
-	steam_workshop_id_from_path = _ModLoaderPath.get_steam_workshop_id(mod_data.zip_path)
-
-	if steam_workshop_id_from_path.is_empty():
-		return false
-
-	steam_workshop_id = steam_workshop_id_from_path
+	if not valid_minor:
+		validation_messages_warning.push_back(
+			"The mod \"%s\" may not be compatible with the current game version.
+			Enable at your own risk. (current game version: %s, mod compatible with game versions: %s)" %
+			[mod_id, game_version, compatible_game_version]
+		)
+		return true
 
 	return true
