@@ -72,9 +72,6 @@ var scenes_to_refresh := []
 # Example property: "scene_path": [Callable, Callable]
 var scenes_to_modify := {}
 
-# True if ModLoader has displayed the warning about using zipped mods
-var has_shown_editor_zips_warning := false
-
 # Things to keep to ensure they are not garbage collected (used by `save_scene`)
 var saved_objects := []
 

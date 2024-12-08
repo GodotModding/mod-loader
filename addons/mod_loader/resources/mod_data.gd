@@ -81,9 +81,13 @@ func _init(_manifest: ModManifest, path: String) -> void:
 
 	_has_required_files()
 	_is_mod_dir_name_same_as_id(manifest)
+	# TODO: Check for correct file structure
 
 	is_overwrite = _is_overwrite()
 	is_locked = manifest.get_mod_id() in ModLoaderStore.ml_options.locked_mods
+
+	if not load_errors.is_empty():
+		is_loadable = false
 
 
 # Load each mod config json from the mods config directory.
@@ -137,7 +141,7 @@ func set_mod_state(should_activate: bool, force := false) -> bool:
 			% [manifest.get_mod_id(), ", ".join(load_errors)], LOG_NAME)
 		return false
 
-	if should_activate and load_warnings.size() > 0:
+	if should_activate and manifest.validation_messages_warning.size() > 0:
 		if not force:
 			ModLoaderLog.warning(
 				"Rejecting to activate mod \"%s\" since it has the following load warnings: %s"

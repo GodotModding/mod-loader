@@ -68,11 +68,13 @@ func _init() -> void:
 	var _success_user_profile_load := ModLoaderUserProfile._load()
 
 	# --- Start loading mods ---
+	var loaded_count := 0
+
 	# mod_path can be a directory in mods-unpacked or a mod.zip
 	for mod_path in _ModLoaderPath.get_mod_paths_from_all_sources():
-		var zip_path := mod_path if _ModLoaderPath.is_zip(mod_path) else ""
+		var is_zip := _ModLoaderPath.is_zip(mod_path)
 
-		# Load manifest files
+		# Load manifest file
 		var manifest_data: Dictionary = _ModLoaderFile.load_manifest_file(mod_path)
 		var manifest := ModManifest.new(manifest_data, mod_path)
 
@@ -83,14 +85,38 @@ func _init() -> void:
 		# Init ModData
 		var mod := ModData.new(manifest, mod_path)
 
-		if not mod:
+		if not mod.is_loadable:
 			ModLoaderStore.ml_options.disabled_mods.append(mod.manifest.get_mod_id())
 			ModLoaderLog.error("Mod %s can't be loaded due to errors." % [mod.manifest.get_mod_id()], LOG_NAME)
 			continue
 
 		ModLoaderStore.mod_data[manifest.get_mod_id()] = mod
 
+		if is_zip:
+			var is_mod_loaded_successfully := ProjectSettings.load_resource_pack(mod_path, false)
 
+			if not is_mod_loaded_successfully:
+				ModLoaderLog.error("Failed to load mod zip from path \"%s\" into the virtual filesystem." % mod_path, LOG_NAME)
+				continue
+
+		ModLoaderLog.success("%s loaded." % mod_path, LOG_NAME)
+		loaded_count += 1
+
+		# Notifies developer of an issue with Godot, where using `load_resource_pack`
+		# in the editor WIPES the entire virtual res:// directory the first time you
+		# use it. This means that unpacked mods are no longer accessible, because they
+		# no longer exist in the file system. So this warning basically says
+		# "don't use ZIPs with unpacked mods!"
+		# https://github.com/godotengine/godot/issues/19815
+		# https://github.com/godotengine/godot/issues/16798
+		if OS.has_feature("editor"):
+			ModLoaderLog.warning(
+				"Loading any resource packs (.zip/.pck) with `load_resource_pack` will WIPE the entire virtual res:// directory.
+				If you have any unpacked mods in %s, they will not be loaded.Please unpack your mod ZIPs instead, and add them to %s" %
+				[_ModLoaderPath.get_unpacked_mods_dir_path(), _ModLoaderPath.get_unpacked_mods_dir_path()], LOG_NAME, true
+			)
+
+	ModLoaderLog.success("DONE: Loaded %s mod files into the virtual filesystem" % loaded_count, LOG_NAME)
 
 
 func _load_mod_hooks_pack() -> void:
