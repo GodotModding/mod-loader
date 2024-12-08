@@ -77,12 +77,11 @@ func _init(_manifest: ModManifest, path: String) -> void:
 	dir_path = _ModLoaderPath.get_unpacked_mods_dir_path().path_join(manifest.get_mod_id())
 	# Use the base dir of the passed path instead of the manifest data so we can validate
 	# the mod dir has the same name as the mod id in the manifest.
-	dir_name = path.get_base_dir()
+	dir_name = path.split("/")[-1]
 	source = get_mod_source()
 
 	_has_required_files()
 	_is_mod_dir_name_same_as_id(manifest)
-	# TODO: Check for correct file structure
 
 	is_overwrite = _is_overwrite()
 	is_locked = manifest.get_mod_id() in ModLoaderStore.ml_options.locked_mods

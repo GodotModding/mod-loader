@@ -47,7 +47,7 @@ var validation_messages_warning : Array[String] = []
 var is_valid := false
 
 # Required keys in a mod's manifest.json file
-const REQUIRED_MANIFEST_KEYS_ROOT = [
+const REQUIRED_MANIFEST_KEYS_ROOT: Array[String] = [
 	"name",
 	"namespace",
 	"version_number",
@@ -58,7 +58,7 @@ const REQUIRED_MANIFEST_KEYS_ROOT = [
 ]
 
 # Required keys in manifest's `json.extra.godot`
-const REQUIRED_MANIFEST_KEYS_EXTRA = [
+const REQUIRED_MANIFEST_KEYS_EXTRA: Array[String] = [
 	"authors",
 	"compatible_mod_loader_version",
 	"compatible_game_version",
@@ -68,11 +68,11 @@ const REQUIRED_MANIFEST_KEYS_EXTRA = [
 # Takes the manifest as [Dictionary] and validates everything.
 # Will return null if something is invalid.
 func _init(manifest: Dictionary, path: String) -> void:
-	var missing_fields: Array[String]
+	var missing_fields: Array[String] = []
 
-	missing_fields.push_back(ModLoaderUtils.get_missing_dict_fields(manifest, REQUIRED_MANIFEST_KEYS_ROOT))
-	missing_fields.push_back(ModLoaderUtils.get_missing_dict_fields(manifest.extra, ["godot"]))
-	missing_fields.push_back(ModLoaderUtils.get_missing_dict_fields(manifest.extra.godot, REQUIRED_MANIFEST_KEYS_EXTRA))
+	missing_fields.append_array(ModLoaderUtils.get_missing_dict_fields(manifest, REQUIRED_MANIFEST_KEYS_ROOT))
+	missing_fields.append_array(ModLoaderUtils.get_missing_dict_fields(manifest.extra, ["godot"]))
+	missing_fields.append_array(ModLoaderUtils.get_missing_dict_fields(manifest.extra.godot, REQUIRED_MANIFEST_KEYS_EXTRA))
 
 	if not missing_fields.is_empty():
 		validation_messages_error.push_back("Manifest is missing required fields: %s" % str(missing_fields))

@@ -173,20 +173,18 @@ static func get_path_to_mods() -> String:
 
 
 static func get_mod_paths_from_all_sources() -> Array[String]:
-	var mod_ids: Array[String] = []
+	var mod_paths: Array[String] = []
 
-	if OS.has_feature("editor"):
-		var mod_dirs := DirAccess.get_directories_at(get_unpacked_mods_dir_path())
-		mod_ids.append_array(mod_dirs)
+	var mod_dirs := get_dir_paths_in_dir(get_unpacked_mods_dir_path())
+	mod_paths.append_array(mod_dirs)
 
 	if ModLoaderStore.ml_options.load_from_local:
-		mod_ids.append_array(DirAccess.get_directories_at(get_path_to_mods()))
+		mod_paths.append_array(get_dir_paths_in_dir(get_path_to_mods()))
 
 	if ModLoaderStore.ml_options.load_from_steam_workshop:
-		mod_ids.append_array(_ModLoaderSteam.find_steam_workshop_zips())
+		mod_paths.append_array(_ModLoaderSteam.find_steam_workshop_zips())
 
-
-	return mod_ids
+	return mod_paths
 
 
 static func get_path_to_mod_manifest(mod_id: String) -> String:
