@@ -75,8 +75,9 @@ func _init(_manifest: ModManifest, path: String) -> void:
 		zip_path = path
 
 	dir_path = _ModLoaderPath.get_unpacked_mods_dir_path().path_join(manifest.get_mod_id())
-	# Note: Changed this so we can validate that the dir and the mod_id in the manifest are the same.
-	dir_name = path.split("/")[-1]
+	# Use the base dir of the passed path instead of the manifest data so we can validate
+	# the mod dir has the same name as the mod id in the manifest.
+	dir_name = path.get_base_dir()
 	source = get_mod_source()
 
 	_has_required_files()
@@ -176,7 +177,10 @@ func _has_required_files() -> bool:
 		var required_file_path := get_required_mod_file_path(RequiredModFiles[required_file])
 
 		if not _ModLoaderFile.file_exists(required_file_path, zip_path):
-			load_errors.push_back("ERROR - %s is missing a required file: %s" % [dir_name, required_file_path])
+			load_errors.push_back(
+				"ERROR - %s is missing a required file: %s. For more information, please visit \"%s\"." %
+				[dir_name, required_file_path, ModLoaderStore.URL_MOD_STRUCTURE_DOCS]
+			)
 			has_required_files = false
 
 	return has_required_files

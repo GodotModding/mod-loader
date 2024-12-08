@@ -25,6 +25,8 @@ const REQUIRE_CMD_LINE := false
 
 const LOG_NAME := "ModLoader:Store"
 
+const URL_MOD_STRUCTURE_DOCS := "https://wiki.godotmodding.com/guides/modding/mod_structure"
+
 # Vars
 # =============================================================================
 
