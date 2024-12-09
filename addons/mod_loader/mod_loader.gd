@@ -99,22 +99,22 @@ func _init() -> void:
 				ModLoaderLog.error("Failed to load mod zip from path \"%s\" into the virtual filesystem." % mod_path, LOG_NAME)
 				continue
 
+			# Notifies developer of an issue with Godot, where using `load_resource_pack`
+			# in the editor WIPES the entire virtual res:// directory the first time you
+			# use it. This means that unpacked mods are no longer accessible, because they
+			# no longer exist in the file system. So this warning basically says
+			# "don't use ZIPs with unpacked mods!"
+			# https://github.com/godotengine/godot/issues/19815
+			# https://github.com/godotengine/godot/issues/16798
+			if is_in_editor:
+				ModLoaderLog.warning(
+					"Loading any resource packs (.zip/.pck) with `load_resource_pack` will WIPE the entire virtual res:// directory.
+					If you have any unpacked mods in %s, they will not be loaded.Please unpack your mod ZIPs instead, and add them to %s" %
+					[_ModLoaderPath.get_unpacked_mods_dir_path(), _ModLoaderPath.get_unpacked_mods_dir_path()], LOG_NAME, true
+				)
+
 		ModLoaderLog.success("%s loaded." % mod_path, LOG_NAME)
 		loaded_count += 1
-
-		# Notifies developer of an issue with Godot, where using `load_resource_pack`
-		# in the editor WIPES the entire virtual res:// directory the first time you
-		# use it. This means that unpacked mods are no longer accessible, because they
-		# no longer exist in the file system. So this warning basically says
-		# "don't use ZIPs with unpacked mods!"
-		# https://github.com/godotengine/godot/issues/19815
-		# https://github.com/godotengine/godot/issues/16798
-		if is_in_editor:
-			ModLoaderLog.warning(
-				"Loading any resource packs (.zip/.pck) with `load_resource_pack` will WIPE the entire virtual res:// directory.
-				If you have any unpacked mods in %s, they will not be loaded.Please unpack your mod ZIPs instead, and add them to %s" %
-				[_ModLoaderPath.get_unpacked_mods_dir_path(), _ModLoaderPath.get_unpacked_mods_dir_path()], LOG_NAME, true
-			)
 
 	ModLoaderLog.success("DONE: Loaded %s mod files into the virtual filesystem" % loaded_count, LOG_NAME)
 
