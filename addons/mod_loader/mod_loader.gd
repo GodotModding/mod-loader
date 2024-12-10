@@ -33,10 +33,6 @@ const LOG_NAME := "ModLoader"
 var is_in_editor := OS.has_feature("editor")
 
 
-# Main
-# =============================================================================
-
-
 func _init() -> void:
 	# if mods are not enabled - don't load mods
 	if ModLoaderStore.REQUIRE_CMD_LINE and not _ModLoaderCLI.is_running_with_command_line_arg("--enable-mods"):
@@ -48,7 +44,7 @@ func _init() -> void:
 	if not is_in_editor and _ModLoaderFile.file_exists(_ModLoaderPath.get_path_to_hook_pack()):
 		_load_mod_hooks_pack()
 
-	# Rotate the log files once on startup. Can't be checked in utils, since it's static
+	# Rotate the log files once on startup.
 	ModLoaderLog._rotate_log_file()
 
 	if not ModLoaderStore.ml_options.enable_mods:
@@ -58,7 +54,7 @@ func _init() -> void:
 	# Ensure the ModLoaderStore and ModLoader autoloads are in the correct position.
 	_ModLoaderGodot.check_autoload_positions()
 
-	# Log the autoloads order. Helpful when providing support to players
+	# Log the autoloads order.
 	ModLoaderLog.debug_json_print("Autoload order", _ModLoaderGodot.get_autoload_array(), LOG_NAME)
 
 	# Log game install dir
@@ -79,17 +75,23 @@ func _init() -> void:
 
 		var manifest := ModManifest.new(manifest_data, mod_path)
 
-		if not manifest.is_valid:
-			ModLoaderLog.error("The mod from path \"%s\" cannot be loaded. Manifest validation failed with the following errors:\n\t - %s" % [mod_path, "\n\t - ".join(manifest.validation_messages_error)], LOG_NAME)
+		if not manifest.validation_messages_error.is_empty():
+			ModLoaderLog.error(
+				"The mod from path \"%s\" cannot be loaded. Manifest validation failed with the following errors:\n\t - %s" %
+				[mod_path, "\n\t - ".join(manifest.validation_messages_error)], LOG_NAME
+			)
 
 		# Init ModData
 		var mod := ModData.new(manifest, mod_path)
 
-		if not mod.is_loadable:
+		if not mod.load_errors.is_empty():
 			ModLoaderStore.ml_options.disabled_mods.append(mod.manifest.get_mod_id())
-			ModLoaderLog.error("The mod from path \"%s\" cannot be loaded. ModData initialisation has failed with the following errors:\n\t - %s" % [mod_path, "\n\t - ".join(mod.load_errors)], LOG_NAME)
+			ModLoaderLog.error(
+				"The mod from path \"%s\" cannot be loaded. ModData initialization has failed with the following errors:\n\t - %s" %
+				[mod_path, "\n\t - ".join(mod.load_errors)], LOG_NAME
+			)
 
-		# Using the mod.dir_name here allows us to store the ModData even if the manifest validation fails.
+		# Using mod.dir_name here allows us to store the ModData even if manifest validation fails.
 		ModLoaderStore.mod_data[mod.dir_name] = mod
 
 		if mod.is_loadable and is_zip:
