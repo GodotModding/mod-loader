@@ -76,23 +76,23 @@ func _init() -> void:
 
 		# Load manifest file
 		var manifest_data: Dictionary = _ModLoaderFile.load_manifest_file(mod_path)
+
 		var manifest := ModManifest.new(manifest_data, mod_path)
 
 		if not manifest.is_valid:
-			ModLoaderLog.error("The mod from path \"%s\" cannot be loaded. Manifest validation failed with the following errors: %s" % [mod_path, "\n\t -".join(manifest.validation_messages_error)], LOG_NAME)
-			continue
+			ModLoaderLog.error("The mod from path \"%s\" cannot be loaded. Manifest validation failed with the following errors:\n\t - %s" % [mod_path, "\n\t - ".join(manifest.validation_messages_error)], LOG_NAME)
 
 		# Init ModData
 		var mod := ModData.new(manifest, mod_path)
 
 		if not mod.is_loadable:
 			ModLoaderStore.ml_options.disabled_mods.append(mod.manifest.get_mod_id())
-			ModLoaderLog.error("Mod %s can't be loaded due to errors." % [mod.manifest.get_mod_id()], LOG_NAME)
-			continue
+			ModLoaderLog.error("The mod from path \"%s\" cannot be loaded. ModData initialisation has failed with the following errors:\n\t - %s" % [mod_path, "\n\t - ".join(mod.load_errors)], LOG_NAME)
 
-		ModLoaderStore.mod_data[manifest.get_mod_id()] = mod
+		# Using the mod.dir_name here allows us to store the ModData even if the manifest validation fails.
+		ModLoaderStore.mod_data[mod.dir_name] = mod
 
-		if is_zip:
+		if mod.is_loadable and is_zip:
 			var is_mod_loaded_successfully := ProjectSettings.load_resource_pack(mod_path, false)
 
 			if not is_mod_loaded_successfully:
@@ -168,7 +168,7 @@ func _init() -> void:
 		mod = mod as ModData
 
 		# Continue if mod is disabled
-		if not mod.is_active:
+		if not mod.is_active or not mod.is_loadable:
 			continue
 
 		ModLoaderLog.info("Initializing -> %s" % mod.manifest.get_mod_id(), LOG_NAME)

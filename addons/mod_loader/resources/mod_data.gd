@@ -40,7 +40,7 @@ var zip_path := ""
 
 ## Directory of the mod. Has to be identical to [method ModManifest.get_mod_id]
 var dir_name := ""
-## Path to the Mod's Directory
+## Path to the mod's unpacked directory
 var dir_path := ""
 ## False if any data is invalid
 var is_loadable := true
@@ -74,19 +74,23 @@ func _init(_manifest: ModManifest, path: String) -> void:
 		zip_name = _ModLoaderPath.get_file_name_from_path(path)
 		zip_path = path
 
-	dir_path = _ModLoaderPath.get_unpacked_mods_dir_path().path_join(manifest.get_mod_id())
 	# Use the base dir of the passed path instead of the manifest data so we can validate
 	# the mod dir has the same name as the mod id in the manifest.
 	dir_name = path.split("/")[-1]
+
+	dir_path = _ModLoaderPath.get_unpacked_mods_dir_path().path_join(dir_name)
 	source = get_mod_source()
 
 	_has_required_files()
-	_is_mod_dir_name_same_as_id(manifest)
+	# We want to avoid checking if mod_dir_name == mod_id when manifest parsing has failed
+	# to prevent confusing error messages.
+	if not manifest.has_parsing_failed:
+		_is_mod_dir_name_same_as_id(manifest)
 
 	is_overwrite = _is_overwrite()
 	is_locked = manifest.get_mod_id() in ModLoaderStore.ml_options.locked_mods
 
-	if not load_errors.is_empty():
+	if not load_errors.is_empty() or not manifest.validation_messages_error.is_empty():
 		is_loadable = false
 
 

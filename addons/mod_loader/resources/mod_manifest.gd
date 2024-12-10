@@ -45,6 +45,7 @@ var validation_messages_error : Array[String] = []
 var validation_messages_warning : Array[String] = []
 
 var is_valid := false
+var has_parsing_failed := false
 
 # Required keys in a mod's manifest.json file
 const REQUIRED_MANIFEST_KEYS_ROOT: Array[String] = [
@@ -68,6 +69,14 @@ const REQUIRED_MANIFEST_KEYS_EXTRA: Array[String] = [
 # Takes the manifest as [Dictionary] and validates everything.
 # Will return null if something is invalid.
 func _init(manifest: Dictionary, path: String) -> void:
+	if manifest.is_empty():
+		validation_messages_error.push_back("The manifest cannot be validated due to missing data, most likely because parsing the manifest.json file failed.")
+		has_parsing_failed = true
+	else:
+		is_valid = validate(manifest, path)
+
+
+func validate(manifest: Dictionary, path: String) -> bool:
 	var missing_fields: Array[String] = []
 
 	missing_fields.append_array(ModLoaderUtils.get_missing_dict_fields(manifest, REQUIRED_MANIFEST_KEYS_ROOT))
@@ -132,8 +141,7 @@ func _init(manifest: Dictionary, path: String) -> void:
 
 	_validate_workshop_id(path)
 
-	if validation_messages_error.is_empty():
-		is_valid = true
+	return validation_messages_error.is_empty()
 
 
 # Mod ID used in the mod loader
@@ -340,7 +348,7 @@ func is_semver_valid(mod_id: String, check_version_number: String, field_name: S
 			validation_messages_error.push_back(
 				str(
 					"Invalid semantic version: \"%s\" in field \"%s\" of mod \"%s\". " +
-					"You may only use numbers without leading zero and periods" +
+					"You may only use numbers without leading zero and periods " +
 					"following this format {mayor}.{minor}.{patch}"
 				)  % [check_version_number, field_name, mod_id]
 			)
