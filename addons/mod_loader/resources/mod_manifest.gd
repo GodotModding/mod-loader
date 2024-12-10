@@ -433,7 +433,7 @@ func is_mod_id_valid(original_mod_id: String, check_mod_id: String, type := "", 
 	var mod_id_length = check_mod_id.length()
 	if mod_id_length < 7:
 		if not is_silent:
-			validation_messages_error.push_back(str(intro_text, "Mod ID for \"%s\" is too short. It must be at least 7 characters, but its length is: %s" % [check_mod_id, mod_id_length]))
+			validation_messages_error.push_back(str(intro_text, "Mod ID for \"%s\" is too short. It must be at least 7 characters long, but its length is: %s" % [check_mod_id, mod_id_length]))
 		return false
 
 	var split = check_mod_id.split("-")
