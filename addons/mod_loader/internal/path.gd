@@ -179,7 +179,11 @@ static func get_mod_paths_from_all_sources() -> Array[String]:
 	mod_paths.append_array(mod_dirs)
 
 	if ModLoaderStore.ml_options.load_from_local:
-		mod_paths.append_array(get_dir_paths_in_dir(get_path_to_mods()))
+		var mods_dir := get_path_to_mods()
+		if not DirAccess.dir_exists_absolute(mods_dir):
+			ModLoaderLog.info("The directory for mods at path \"%s\" does not exist." % mods_dir, LOG_NAME)
+		else:
+			mod_paths.append_array(get_dir_paths_in_dir(get_path_to_mods()))
 
 	if ModLoaderStore.ml_options.load_from_steam_workshop:
 		mod_paths.append_array(_ModLoaderSteam.find_steam_workshop_zips())
