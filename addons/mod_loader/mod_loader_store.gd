@@ -242,6 +242,11 @@ func _update_ml_options_from_options_resource() -> void:
 			set_option(key, override_options[key])
 
 
+func _exit_tree() -> void:
+	# Save the cache to the cache file.
+	_ModLoaderCache.save_to_file()
+
+
 # Update ModLoader's options, via CLI args
 func _update_ml_options_from_cli_args() -> void:
 	# Disable mods
