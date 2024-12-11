@@ -6,7 +6,7 @@ const LOG_NAME := "ModLoader:ThirdParty:Steam"
 # Methods related to Steam and the Steam Workshop
 
 
-# Load mod ZIPs from Steam workshop folders.
+# Get mod zip paths from steam workshop folders.
 # folder structure of a workshop item
 # <workshop folder>/<steam app id>/<workshop item id>/<mod>.zip
 static func find_steam_workshop_zips() -> Array[String]:
@@ -40,7 +40,7 @@ static func find_steam_workshop_zips() -> Array[String]:
 			continue
 
 		# Loop 2: ZIPs inside the workshop folders
-		zip_paths.append_array(_ModLoaderFile.get_zip_paths_in(ProjectSettings.globalize_path(item_path)))
+		zip_paths.append_array(_ModLoaderPath.get_zip_paths_in(ProjectSettings.globalize_path(item_path)))
 
 	workshop_dir.list_dir_end()
 

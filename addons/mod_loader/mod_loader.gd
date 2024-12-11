@@ -67,7 +67,11 @@ func _init() -> void:
 	var loaded_count := 0
 
 	# mod_path can be a directory in mods-unpacked or a mod.zip
-	for mod_path in _ModLoaderPath.get_mod_paths_from_all_sources():
+	var mod_paths := _ModLoaderPath.get_mod_paths_from_all_sources()
+
+	ModLoaderLog.debug("Found %s mods at the following paths:\n\t - %s" % [mod_paths.size(), "\n\t - ".join(mod_paths)], LOG_NAME)
+
+	for mod_path in mod_paths:
 		var is_zip := _ModLoaderPath.is_zip(mod_path)
 
 		# Load manifest file

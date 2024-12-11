@@ -107,25 +107,6 @@ static func get_json_as_dict_from_zip(zip_path: String, file_path: String, is_fu
 	return _get_json_string_as_dict(content)
 
 
-# Finds the global paths to all zips in provided directory
-static func get_zip_paths_in(folder_path: String) -> Array[String]:
-	var zip_paths: Array[String] = []
-
-	var files := Array(DirAccess.get_files_at(folder_path))\
-	.filter(
-		func(file_name: String):
-			return file_name.get_extension() == "zip"
-	).map(
-		func(file_name: String):
-			return ProjectSettings.globalize_path(folder_path.path_join(file_name))
-	)
-	ModLoaderLog.debug("Found %s mod ZIPs: %s" % [files.size(), str(files)], LOG_NAME)
-
-	# only .assign()ing to a typed array lets us return Array[String] instead of just Array
-	zip_paths.assign(files)
-	return zip_paths
-
-
 # Save Data
 # =============================================================================
 

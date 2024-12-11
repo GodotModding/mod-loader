@@ -172,6 +172,24 @@ static func get_path_to_mods() -> String:
 	return mods_folder_path
 
 
+# Finds the global paths to all zips in provided directory
+static func get_zip_paths_in(folder_path: String) -> Array[String]:
+	var zip_paths: Array[String] = []
+
+	var files := Array(DirAccess.get_files_at(folder_path))\
+	.filter(
+		func(file_name: String):
+			return file_name.get_extension() == "zip"
+	).map(
+		func(file_name: String):
+			return ProjectSettings.globalize_path(folder_path.path_join(file_name))
+	)
+
+	# only .assign()ing to a typed array lets us return Array[String] instead of just Array
+	zip_paths.assign(files)
+	return zip_paths
+
+
 static func get_mod_paths_from_all_sources() -> Array[String]:
 	var mod_paths: Array[String] = []
 
@@ -183,7 +201,7 @@ static func get_mod_paths_from_all_sources() -> Array[String]:
 		if not DirAccess.dir_exists_absolute(mods_dir):
 			ModLoaderLog.info("The directory for mods at path \"%s\" does not exist." % mods_dir, LOG_NAME)
 		else:
-			mod_paths.append_array(get_dir_paths_in_dir(get_path_to_mods()))
+			mod_paths.append_array(get_zip_paths_in(mods_dir))
 
 	if ModLoaderStore.ml_options.load_from_steam_workshop:
 		mod_paths.append_array(_ModLoaderSteam.find_steam_workshop_zips())
