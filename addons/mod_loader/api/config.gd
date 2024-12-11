@@ -349,7 +349,7 @@ static func get_current_config_name(mod_id: String) -> String:
 	# Check if user profile has been loaded
 	if not ModLoaderStore.current_user_profile or not ModLoaderStore.user_profiles.has(ModLoaderStore.current_user_profile.name):
 		# Warn and return an empty string if the user profile has not been loaded
-		ModLoaderLog.warning("Can't get current mod config for \"%s\", because no current user profile is present." % mod_id, LOG_NAME)
+		ModLoaderLog.warning("Can't get current mod config name for \"%s\", because no current user profile is present." % mod_id, LOG_NAME)
 		return ""
 
 	# Retrieve the current user profile from ModLoaderStore
@@ -359,7 +359,7 @@ static func get_current_config_name(mod_id: String) -> String:
 	# Check if the mod exists in the user profile's mod list and if it has a current config
 	if not current_user_profile.mod_list.has(mod_id) or not current_user_profile.mod_list[mod_id].has("current_config"):
 		# Log an error and return an empty string if the mod has no config file
-		ModLoaderLog.error("Mod \"%s\" has no config file." % mod_id, LOG_NAME)
+		ModLoaderLog.error("Can't get current mod config name for \"%s\" because no config file exists." % mod_id, LOG_NAME)
 		return ""
 
 	# Return the name of the current configuration for the mod
