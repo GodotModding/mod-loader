@@ -73,10 +73,11 @@ func _init(_manifest: ModManifest, path: String) -> void:
 	if _ModLoaderPath.is_zip(path):
 		zip_name = _ModLoaderPath.get_file_name_from_path(path)
 		zip_path = path
-
-	# Use the base dir of the passed path instead of the manifest data so we can validate
-	# the mod dir has the same name as the mod id in the manifest.
-	dir_name = path.split("/")[-1]
+		# Use the dir name of the passed path instead of the manifest data so we can validate
+		# the mod dir has the same name as the mod id in the manifest
+		dir_name = _ModLoaderFile.get_mod_dir_name_in_zip(zip_path)
+	else:
+		dir_name = path.split("/")[-1]
 
 	dir_path = _ModLoaderPath.get_unpacked_mods_dir_path().path_join(dir_name)
 	source = get_mod_source()

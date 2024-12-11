@@ -197,6 +197,23 @@ static func file_exists_in_zip(zip_path: String, path: String) -> bool:
 	return reader.file_exists(path.trim_prefix("res://"))
 
 
+static func get_mod_dir_name_in_zip(zip_path: String) -> String:
+	var reader := _ModLoaderFile.zip_reader_open(zip_path)
+	if not reader:
+		return ""
+
+	var file_paths := reader.get_files()
+
+	for file_path in file_paths:
+		# We asume tat the mod_main.gd is at the root of the mod dir
+		if file_path.ends_with("mod_main.gd") and file_path.split("/").size() == 3:
+			return file_path.split("/")[-2]
+		else:
+			""
+
+	return ""
+
+
 static func zip_reader_open(zip_path) -> ZIPReader:
 	var reader := ZIPReader.new()
 	var err := reader.open(zip_path)
