@@ -126,6 +126,8 @@ func _init() -> void:
 	# Load all Mod Configs
 	for dir_name in ModLoaderStore.mod_data:
 		var mod: ModData = ModLoaderStore.mod_data[dir_name]
+		if not mod.is_loadable:
+			continue
 		if mod.manifest.get("config_schema") and not mod.manifest.config_schema.is_empty():
 			mod.load_configs()
 
