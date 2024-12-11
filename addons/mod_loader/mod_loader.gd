@@ -195,6 +195,26 @@ func _init() -> void:
 	new_hooks_created.connect(_ModLoaderHooks.on_new_hooks_created)
 
 
+func _ready():
+	# Create the default user profile if it doesn't exist already
+	# This should always be present unless the JSON file was manually edited
+	if not ModLoaderStore.user_profiles.has("default"):
+		var _success_user_profile_create := ModLoaderUserProfile.create_profile("default")
+
+	# Update the mod_list for each user profile
+	var _success_update_mod_lists := ModLoaderUserProfile._update_mod_lists()
+
+	# Hooks must be generated after all autoloads are available.
+	# Variables initialized with an autoload property cause errors otherwise.
+	if ModLoaderStore.any_mod_hooked:
+		if OS.has_feature("editor"):
+			ModLoaderLog.warning("No mod hooks .zip will be created when running from the editor.", LOG_NAME)
+			ModLoaderLog.info("You can test mod hooks by running the preprocessor on the vanilla scripts once.", LOG_NAME)
+		else:
+			# Generate mod hooks
+			_ModLoaderModHookPacker.start()
+
+
 func _load_mod_hooks_pack() -> void:
 	# Load mod hooks
 	var load_hooks_pack_success := ProjectSettings.load_resource_pack(_ModLoaderPath.get_path_to_hook_pack())
