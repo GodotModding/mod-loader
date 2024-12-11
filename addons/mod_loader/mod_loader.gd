@@ -94,29 +94,30 @@ func _init() -> void:
 		# Using mod.dir_name here allows us to store the ModData even if manifest validation fails.
 		ModLoaderStore.mod_data[mod.dir_name] = mod
 
-		if mod.is_loadable and is_zip:
-			var is_mod_loaded_successfully := ProjectSettings.load_resource_pack(mod_path, false)
+		if mod.is_loadable:
+			if is_zip:
+				var is_mod_loaded_successfully := ProjectSettings.load_resource_pack(mod_path, false)
 
-			if not is_mod_loaded_successfully:
-				ModLoaderLog.error("Failed to load mod zip from path \"%s\" into the virtual filesystem." % mod_path, LOG_NAME)
-				continue
+				if not is_mod_loaded_successfully:
+					ModLoaderLog.error("Failed to load mod zip from path \"%s\" into the virtual filesystem." % mod_path, LOG_NAME)
+					continue
 
-			# Notifies developer of an issue with Godot, where using `load_resource_pack`
-			# in the editor WIPES the entire virtual res:// directory the first time you
-			# use it. This means that unpacked mods are no longer accessible, because they
-			# no longer exist in the file system. So this warning basically says
-			# "don't use ZIPs with unpacked mods!"
-			# https://github.com/godotengine/godot/issues/19815
-			# https://github.com/godotengine/godot/issues/16798
-			if is_in_editor:
-				ModLoaderLog.warning(
-					"Loading any resource packs (.zip/.pck) with `load_resource_pack` will WIPE the entire virtual res:// directory.
-					If you have any unpacked mods in %s, they will not be loaded.Please unpack your mod ZIPs instead, and add them to %s" %
-					[_ModLoaderPath.get_unpacked_mods_dir_path(), _ModLoaderPath.get_unpacked_mods_dir_path()], LOG_NAME, true
-				)
+				# Notifies developer of an issue with Godot, where using `load_resource_pack`
+				# in the editor WIPES the entire virtual res:// directory the first time you
+				# use it. This means that unpacked mods are no longer accessible, because they
+				# no longer exist in the file system. So this warning basically says
+				# "don't use ZIPs with unpacked mods!"
+				# https://github.com/godotengine/godot/issues/19815
+				# https://github.com/godotengine/godot/issues/16798
+				if is_in_editor:
+					ModLoaderLog.warning(
+						"Loading any resource packs (.zip/.pck) with `load_resource_pack` will WIPE the entire virtual res:// directory.
+						If you have any unpacked mods in %s, they will not be loaded.Please unpack your mod ZIPs instead, and add them to %s" %
+						[_ModLoaderPath.get_unpacked_mods_dir_path(), _ModLoaderPath.get_unpacked_mods_dir_path()], LOG_NAME, true
+					)
 
-		ModLoaderLog.success("%s loaded." % mod_path, LOG_NAME)
-		loaded_count += 1
+			ModLoaderLog.success("%s loaded." % mod_path, LOG_NAME)
+			loaded_count += 1
 
 	ModLoaderLog.success("DONE: Loaded %s mod files into the virtual filesystem" % loaded_count, LOG_NAME)
 
