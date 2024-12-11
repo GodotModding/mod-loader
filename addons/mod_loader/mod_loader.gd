@@ -192,6 +192,8 @@ func _init() -> void:
 
 	ModLoaderStore.is_initializing = false
 
+	new_hooks_created.connect(_ModLoaderHooks.on_new_hooks_created)
+
 
 func _load_mod_hooks_pack() -> void:
 	# Load mod hooks

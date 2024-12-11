@@ -45,4 +45,10 @@ static func get_hook_hash(path: String, method: String) -> int:
 	return hash(path + method)
 
 
-
+static func on_new_hooks_created() -> void:
+	if ModLoaderStore.ml_options.disable_restart:
+		ModLoaderLog.debug("Mod Loader handled restart is disabled.", LOG_NAME)
+		return
+	ModLoaderLog.debug("Instancing restart notification scene from path: %s" % [ModLoaderStore.ml_options.restart_notification_scene_path], LOG_NAME)
+	var restart_notification_scene = load(ModLoaderStore.ml_options.restart_notification_scene_path).instantiate()
+	ModLoader.add_child(restart_notification_scene)
