@@ -37,13 +37,16 @@ var test_is_mod_id_array_valid_params = [
 ]
 
 
+var manifest := ModManifest.new({}, "")
+
+
 func test_is_mod_id_valid(params = use_parameters(test_is_mod_id_valid_params)) -> void:
 	# prepare
 	var mod_id = params[0]
 	var expected_result = params[1]
 
 	# test
-	var result = ModManifest.is_mod_id_valid(mod_id, mod_id, "", true)
+	var result = manifest.is_mod_id_valid(mod_id, mod_id, "", true)
 
 	# validate
 	assert_true(
@@ -62,7 +65,7 @@ func test_validate_distinct_mod_ids_in_arrays(params = use_parameters(test_valid
 	var expected_result = params[2]
 
 	# test
-	var result = ModManifest.validate_distinct_mod_ids_in_arrays(mod_id, array_one, array_two, array_description, additional_info, true)
+	var result = manifest.validate_distinct_mod_ids_in_arrays(mod_id, array_one, array_two, array_description, additional_info, true)
 
 	# validate
 	assert_true(
@@ -79,7 +82,7 @@ func test_is_mod_id_array_valid(params = use_parameters(test_is_mod_id_array_val
 	var expected_result = params[1]
 
 	# test
-	var result = ModManifest.is_mod_id_array_valid(mod_id, mod_id_array, description, true)
+	var result = manifest.is_mod_id_array_valid(mod_id, mod_id_array, description, true)
 
 	# validate
 	assert_true(
