@@ -251,7 +251,8 @@ static func get_function_parameters(method_name: String, text: String, is_static
 		.replace("\n", "")\
 		.replace("\t", "")\
 		.replace(",", ", ")\
-		.replace(":", ": ")
+		.replace(":", ": ")\
+		.replace("\\", "")
 
 	return param_string
 
