@@ -197,8 +197,7 @@ func this_is_so_fucking_cursed():
 	_ModLoaderHooks.call_hooks(vanilla_2078531418_this_is_so_fucking_cursed, [], 1910726041)
 
 
-func why_would_you(put: int, \
-backslashes: ="\\", in_here: ="?!\n"):
+func why_would_you(put: int, backslashes: ="\\", in_here: ="?!\n"):
 	_ModLoaderHooks.call_hooks(vanilla_2078531418_why_would_you, [put, backslashes, in_here], 1414126584)
 
 
@@ -227,19 +226,19 @@ func get_exclude_me():
 
 
 func definitely_a_coroutine(args: =[]):
-	_ModLoaderHooks.call_hooks(vanilla_2078531418_definitely_a_coroutine, [args], 1072984126)
+	await _ModLoaderHooks.call_hooks_async(vanilla_2078531418_definitely_a_coroutine, [args], 1072984126)
 
 
 func definitely_a_coroutine2(args: =[]):
-	return _ModLoaderHooks.call_hooks(vanilla_2078531418_definitely_a_coroutine2, [args], 1048737840)
+	return await _ModLoaderHooks.call_hooks_async(vanilla_2078531418_definitely_a_coroutine2, [args], 1048737840)
 
 
 func definitely_a_coroutine3(args: =[]):
-	return _ModLoaderHooks.call_hooks(vanilla_2078531418_definitely_a_coroutine3, [args], 1048737841)
+	return await _ModLoaderHooks.call_hooks_async(vanilla_2078531418_definitely_a_coroutine3, [args], 1048737841)
 
 
 func definitely_a_coroutine4(args: =[]):
-	_ModLoaderHooks.call_hooks(vanilla_2078531418_definitely_a_coroutine4, [args], 1048737842)
+	await _ModLoaderHooks.call_hooks_async(vanilla_2078531418_definitely_a_coroutine4, [args], 1048737842)
 
 
 func absolutely_not_a_coroutine(args: =[]):
@@ -247,11 +246,11 @@ func absolutely_not_a_coroutine(args: =[]):
 
 
 func definitely_a_coroutine5(args: =[]):
-	_ModLoaderHooks.call_hooks(vanilla_2078531418_definitely_a_coroutine5, [args], 1048737843)
+	await _ModLoaderHooks.call_hooks_async(vanilla_2078531418_definitely_a_coroutine5, [args], 1048737843)
 
 
 func definitely_a_coroutine6(args: =[]):
-	_ModLoaderHooks.call_hooks(vanilla_2078531418_definitely_a_coroutine6, [args], 1048737844)
+	await _ModLoaderHooks.call_hooks_async(vanilla_2078531418_definitely_a_coroutine6, [args], 1048737844)
 
 
 func absolutely_not_a_coroutine2(args: =[]):
@@ -259,4 +258,4 @@ func absolutely_not_a_coroutine2(args: =[]):
 
 
 func definitely_a_coroutine7(args: =[]):
-	_ModLoaderHooks.call_hooks(vanilla_2078531418_definitely_a_coroutine7, [args], 1048737845)
+	await _ModLoaderHooks.call_hooks_async(vanilla_2078531418_definitely_a_coroutine7, [args], 1048737845)

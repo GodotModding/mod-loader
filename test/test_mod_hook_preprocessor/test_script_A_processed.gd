@@ -61,7 +61,7 @@ func vanilla_2078459544__get_some_var_with_get():
 
 
 func _ready():
-	_ModLoaderHooks.call_hooks(vanilla_2078459544__ready, [], 2195022348)
+	await _ModLoaderHooks.call_hooks_async(vanilla_2078459544__ready, [], 2195022348)
 
 
 func _process(delta: float):
