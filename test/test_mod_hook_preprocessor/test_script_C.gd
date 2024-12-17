@@ -76,7 +76,7 @@ static func static_super():
 	pass
 
 
-func this_is_so_fucking_cursed
+func this_is_so_cursed
 ():
 	pass
 

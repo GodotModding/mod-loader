@@ -76,7 +76,7 @@ static func vanilla_2078531418_static_super():
 	pass
 
 
-func vanilla_2078531418_this_is_so_fucking_cursed():
+func vanilla_2078531418_this_is_so_cursed():
 	pass
 
 func this_too\
