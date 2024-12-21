@@ -52,7 +52,7 @@ static func start() -> void:
 
 		# Skip writing to the zip if no new hooks were created for this script
 		if not hook_pre_processor.script_paths_hooked.has(path):
-			ModLoaderLog.debug("No new hooks where created in \"%s\" skipping writing to hook pack." % path, LOG_NAME)
+			ModLoaderLog.debug("No new hooks were created in \"%s\", skipping writing to hook pack." % path, LOG_NAME)
 			continue
 
 		zip_writer.start_file(path.trim_prefix("res://"))
