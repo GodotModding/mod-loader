@@ -79,8 +79,7 @@ static func vanilla_2078531418_static_super():
 func vanilla_2078531418_this_is_so_cursed():
 	pass
 
-func this_too\
-():
+func vanilla_2078531418_this_too():
 	pass
 
 func vanilla_2078531418_why_would_you(put: int, \
@@ -193,8 +192,12 @@ static func static_super():
 	_ModLoaderHooks.call_hooks(vanilla_2078531418_static_super, [], 1720709936)
 
 
-func this_is_so_fucking_cursed():
-	_ModLoaderHooks.call_hooks(vanilla_2078531418_this_is_so_cursed, [], 1910726041)
+func this_is_so_cursed():
+	_ModLoaderHooks.call_hooks(vanilla_2078531418_this_is_so_cursed, [], 1705479347)
+
+
+func this_too():
+	_ModLoaderHooks.call_hooks(vanilla_2078531418_this_too, [], 1507098083)
 
 
 func why_would_you(put: int, backslashes: ="\\", in_here: ="?!\n"):
