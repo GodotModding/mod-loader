@@ -194,7 +194,7 @@ static func static_super():
 
 
 func this_is_so_fucking_cursed():
-	_ModLoaderHooks.call_hooks(vanilla_2078531418_this_is_so_fucking_cursed, [], 1910726041)
+	_ModLoaderHooks.call_hooks(vanilla_2078531418_this_is_so_cursed, [], 1910726041)
 
 
 func why_would_you(put: int, backslashes: ="\\", in_here: ="?!\n"):
