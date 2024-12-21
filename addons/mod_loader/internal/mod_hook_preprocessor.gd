@@ -33,6 +33,7 @@ var regex_keyword_await := RegEx.create_from_string("\\bawait\\b")
 
 
 var hashmap := {}
+var script_paths_hooked := {}
 
 
 func process_begin() -> void:
@@ -65,8 +66,22 @@ func process_script(path: String, enable_hook_check := false) -> String:
 		is_func_moddable.bind(source_code, getters_setters)
 	)
 
+	var methods_hooked := {}
+
 	for method in moddable_methods:
 		if method.name in method_store:
+			continue
+
+		var prefix := "%s%s_" % [METHOD_PREFIX, class_prefix]
+
+		# Verifies if the method has already been processed and hooked before
+		# to avoid duplicate hooks on the same function.
+		if method.name.begins_with(prefix):
+			var method_name_vanilla: String = method.name.trim_prefix(prefix)
+			methods_hooked[method_name_vanilla] = true
+			continue
+
+		if methods_hooked.has(method.name):
 			continue
 
 		var type_string := get_return_type_string(method.return)
@@ -131,6 +146,8 @@ func process_script(path: String, enable_hook_check := false) -> String:
 			METHOD_PREFIX + class_prefix
 		)
 		source_code_additions += "\n%s" % mod_loader_hook_string
+
+		script_paths_hooked[path] = true
 
 	# If we have some additions to the code, append them at the end
 	if source_code_additions != "":

@@ -50,6 +50,11 @@ static func start() -> void:
 
 		var processed_source_code := hook_pre_processor.process_script_verbose(path)
 
+		# Skip writing to the zip if no new hooks were created for this script
+		if not hook_pre_processor.script_paths_hooked.has(path):
+			ModLoaderLog.debug("No new hooks where created in \"%s\" skipping writing to hook pack." % path, LOG_NAME)
+			continue
+
 		zip_writer.start_file(path.trim_prefix("res://"))
 		zip_writer.write_file(processed_source_code.to_utf8_buffer())
 		zip_writer.close_file()
