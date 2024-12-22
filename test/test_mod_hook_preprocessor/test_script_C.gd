@@ -91,7 +91,8 @@ func please_stop\
 # wow (
 # wow
 #( wow
-():
+		 \
+	 ():
 	pass
 
 func why_would_you(put: int, \
