@@ -337,7 +337,7 @@ func match_method_body(method_name: String, func_body_start_index: int, text: St
 
 static func match_func_with_whitespace(method_name: String, text: String, offset := 0) -> RegExMatch:
 	# Dynamically create the new regex for that specific name
-	var func_with_whitespace := RegEx.create_from_string("func\\s+%s[\\\\\\s]*\\(" % method_name)
+	var func_with_whitespace := RegEx.create_from_string("func\\s+%s(.*\\n*)*?\\(" % method_name)
 	return func_with_whitespace.search(text, offset)
 
 
