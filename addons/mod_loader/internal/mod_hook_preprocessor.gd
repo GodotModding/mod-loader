@@ -268,8 +268,6 @@ static func get_function_parameters(method_name: String, text: String, is_static
 	# Clean whitespace characters (spaces, newlines, tabs)
 	param_string = param_string.strip_edges()\
 		.replace(" ", "")\
-		.replace("\\\n", "")\
-		.replace("\n", "")\
 		.replace("\t", "")\
 		.replace(",", ", ")\
 		.replace(":", ": ")
