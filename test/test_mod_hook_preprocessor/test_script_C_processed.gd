@@ -79,7 +79,12 @@ static func vanilla_2078531418_static_super():
 func vanilla_2078531418_this_is_so_cursed():
 	pass
 
+
 func vanilla_2078531418_this_too():
+	pass
+
+
+func vanilla_2078531418_please_stop():
 	pass
 
 func vanilla_2078531418_why_would_you(put: int, \
@@ -154,7 +159,7 @@ func vanilla_2078531418_absolutely_not_a_coroutine2(args := []):
 	# hello""", get_something()) # don't await
 
 func vanilla_2078531418_definitely_a_coroutine7(args := []):
-	print("# \'ello", await get_something())
+	print("# \'hello", await get_something())
 
 
 # ModLoader Hooks - The following code has been automatically added by the Godot Mod Loader.
@@ -198,6 +203,10 @@ func this_is_so_cursed():
 
 func this_too():
 	_ModLoaderHooks.call_hooks(vanilla_2078531418_this_too, [], 1507098083)
+
+
+func please_stop():
+	_ModLoaderHooks.call_hooks(vanilla_2078531418_please_stop, [], 2851245561)
 
 
 func why_would_you(put: int, backslashes: ="\\", in_here: ="?!\n"):

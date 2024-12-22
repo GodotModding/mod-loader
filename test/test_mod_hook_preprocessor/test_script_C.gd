@@ -80,7 +80,17 @@ func this_is_so_cursed
 ():
 	pass
 
+
 func this_too\
+():
+	pass
+
+
+func please_stop\
+# wow
+# wow
+# wow
+# wow
 ():
 	pass
 
@@ -156,4 +166,4 @@ func absolutely_not_a_coroutine2(args := []):
 	# hello""", get_something()) # don't await
 
 func definitely_a_coroutine7(args := []):
-	print("# \'ello", await get_something())
+	print("# \'hello", await get_something())
