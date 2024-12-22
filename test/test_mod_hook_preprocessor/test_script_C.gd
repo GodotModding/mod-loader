@@ -88,9 +88,9 @@ func this_too\
 
 func please_stop\
 # wow
+# wow (
 # wow
-# wow
-# wow
+#( wow
 ():
 	pass
 
