@@ -18,8 +18,8 @@ var eighteen: get = actually_get_something, \
 set= actual_setter
 
 func method(
-	one,
-	two, 	three:  int,
+	one, #Some comment
+	two, 	three:  int, # More comments
 		four
 ):
 	pass

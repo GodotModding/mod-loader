@@ -18,8 +18,8 @@ var eighteen: get = actually_get_something, \
 set= actual_setter
 
 func vanilla_2078531418_method(
-	one,
-	two, 	three:  int,
+	one, #Some comment
+	two, 	three:  int, # More comments
 		four
 ):
 	pass
@@ -165,7 +165,9 @@ func vanilla_2078531418_definitely_a_coroutine7(args := []):
 # ModLoader Hooks - The following code has been automatically added by the Godot Mod Loader.
 
 
-func method(one, two, three: int, four):
+func method(one, #Somecomment
+two, three: int, #Morecomments
+four):
 	_ModLoaderHooks.call_hooks(vanilla_2078531418_method, [one, two, three, four], 2863650651)
 
 
@@ -209,7 +211,8 @@ func please_stop():
 	_ModLoaderHooks.call_hooks(vanilla_2078531418_please_stop, [], 2851245561)
 
 
-func why_would_you(put: int, backslashes: ="\\", in_here: ="?!\n"):
+func why_would_you(put: int, \
+backslashes: ="\\", in_here: ="?!\n"):
 	_ModLoaderHooks.call_hooks(vanilla_2078531418_why_would_you, [put, backslashes, in_here], 1414126584)
 
 
