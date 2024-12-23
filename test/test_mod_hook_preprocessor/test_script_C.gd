@@ -66,11 +66,14 @@ func sup_func_two(): pass
 func sup_func():
 	pass
 
-#func other_test_func():
+
+#func other_test_func(some_param: Cool):
 	#pass # test if comments match
+
 
 func other_test_func():
 	pass
+
 
 static func static_super():
 	pass
