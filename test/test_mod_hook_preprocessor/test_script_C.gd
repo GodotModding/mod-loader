@@ -75,6 +75,14 @@ func other_test_func():
 	pass
 
 
+# 	func more_comment_testing(some_param: Cool) -> void:
+	#pass # test if comments match
+
+
+func more_comment_testing() -> void:
+	pass
+
+
 static func static_super():
 	pass
 
