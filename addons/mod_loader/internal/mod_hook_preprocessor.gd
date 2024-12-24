@@ -354,11 +354,15 @@ static func build_mod_hook_string(
 	var async_string := "_async" if is_async else ""
 	var return_var := "var %s = " % "return_var" if not method_type.is_empty() or return_prop_usage == 131072 else ""
 	var method_return := "return " if not method_type.is_empty() or return_prop_usage == 131072 else ""
-	var hook_check := 'if ModLoaderStore.get("any_mod_hooked") and ModLoaderStore.any_mod_hooked:\n\t\t' if enable_hook_check else ""
+	var hook_check := "if ModLoaderStore.any_mod_hooked:\n\t\t" if enable_hook_check else ""
+	var hook_check_else := get_hook_check_else_string(
+			method_return, await_string, method_prefix, method_name, method_arg_string_names_only
+		) if enable_hook_check else ""
+
 
 	return """
 {STATIC}func {METHOD_NAME}({METHOD_PARAMS}){RETURN_TYPE_STRING}:
-	{HOOK_CHECK}{METHOD_RETURN}{AWAIT}_ModLoaderHooks.call_hooks{ASYNC}({METHOD_PREFIX}_{METHOD_NAME}, [{METHOD_ARGS}], {HOOK_ID})
+	{HOOK_CHECK}{METHOD_RETURN}{AWAIT}_ModLoaderHooks.call_hooks{ASYNC}({METHOD_PREFIX}_{METHOD_NAME}, [{METHOD_ARGS}], {HOOK_ID}){HOOK_CHECK_ELSE}
 """.format({
 		"METHOD_PREFIX": method_prefix,
 		"METHOD_NAME": method_name,
@@ -372,6 +376,7 @@ static func build_mod_hook_string(
 		"ASYNC": async_string,
 		"HOOK_ID": hook_id,
 		"HOOK_CHECK": hook_check,
+		"HOOK_CHECK_ELSE": hook_check_else
 	})
 
 
@@ -459,3 +464,21 @@ func collect_getters_and_setters(text: String) -> Dictionary:
 		result[mat.get_string(4)] = true
 
 	return result
+
+
+static func get_hook_check_else_string(
+	method_return: String,
+	await_string: String,
+	method_prefix: String,
+	method_name: String,
+	method_arg_string_names_only: String
+) -> String:
+	return "\n\telse:\n\t\t{METHOD_RETURN}{AWAIT}{METHOD_PREFIX}_{METHOD_NAME}({METHOD_ARGS})".format(
+			{
+				"METHOD_RETURN": method_return,
+				"AWAIT": await_string,
+				"METHOD_PREFIX": method_prefix,
+				"METHOD_NAME": method_name,
+				"METHOD_ARGS": method_arg_string_names_only
+			}
+		)
