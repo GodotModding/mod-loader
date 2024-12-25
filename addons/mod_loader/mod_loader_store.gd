@@ -12,7 +12,7 @@ extends Node
 # Most of these settings should never need to change, aside from the DEBUG_*
 # options (which should be `false` when distributing compiled PCKs)
 
-const MODLOADER_VERSION := "7.0.0"
+const MODLOADER_VERSION := "7.0.1"
 
 # If true, a complete array of filepaths is stored for each mod. This is
 # disabled by default because the operation can be very expensive, but may
@@ -92,21 +92,13 @@ var saved_mod_mains := {}
 # Stores script extension paths with the key being the namespace of a mod
 var saved_extension_paths := {}
 
-# Keeps track of logged messages, to avoid flooding the log with duplicate notices
-# Can also be used by mods, eg. to create an in-game developer console that
-# shows messages
-var logged_messages := {
-	"all": {},
-	"by_mod": {},
-	"by_type": {
-		"fatal-error": {},
-		"error": {},
-		"warning": {},
-		"info": {},
-		"success": {},
-		"debug": {},
-	}
-}
+var logged_messages: Dictionary:
+	set(val):
+		ModLoaderDeprecated.deprecated_message("ModLoaderStore.logged_messages was moved to ModLoaderLog.logged_messages", "7.0.1")
+		ModLoaderLog.logged_messages = val
+	get:
+		ModLoaderDeprecated.deprecated_message("ModLoaderStore.logged_messages was moved to ModLoaderLog.logged_messages", "7.0.1")
+		return ModLoaderLog.logged_messages
 
 # Active user profile
 var current_user_profile: ModUserProfile
@@ -187,6 +179,20 @@ func _init():
 	_ModLoaderCache.init_cache(self)
 
 
+func set_option(option_name: String, new_value: Variant) -> void:
+	ml_options[option_name] = new_value
+
+	match option_name:
+		"log_level":
+			ModLoaderLog.verbosity = new_value
+		"ignored_mod_names_in_log":
+			ModLoaderLog.ignored_mods = new_value
+
+
+func get_option(option_name: String) -> Variant:
+	return ml_options[option_name]
+
+
 # Update ModLoader's options, via the custom options resource
 func _update_ml_options_from_options_resource() -> void:
 	# Path to the options resource
@@ -212,7 +218,7 @@ func _update_ml_options_from_options_resource() -> void:
 			), LOG_NAME)
 		# Update from the options in the resource
 		for key in ml_options:
-			ml_options[key] = current_options[key]
+			set_option(key, current_options[key])
 
 	# Get options overrides by feature tags
 	# An override is saved as Dictionary[String: ModLoaderOptionsProfile]
@@ -242,7 +248,7 @@ func _update_ml_options_from_options_resource() -> void:
 
 		# Update from the options in the resource
 		for key in ml_options:
-			ml_options[key] = override_options[key]
+			set_option(key, override_options[key])
 
 
 # Update ModLoader's options, via CLI args

@@ -1,3 +1,4 @@
+@tool
 class_name ModLoaderLog
 extends Object
 ##
@@ -15,6 +16,28 @@ enum VERBOSITY_LEVEL {
 	INFO,
 	DEBUG,
 }
+
+# Keeps track of logged messages, to avoid flooding the log with duplicate notices
+# Can also be used by mods, eg. to create an in-game developer console that
+# shows messages
+static var logged_messages := {
+	"all": {},
+	"by_mod": {},
+	"by_type": {
+		"fatal-error": {},
+		"error": {},
+		"warning": {},
+		"info": {},
+		"success": {},
+		"debug": {},
+	}
+}
+
+static var verbosity: VERBOSITY_LEVEL = VERBOSITY_LEVEL.DEBUG
+
+# Array of mods that should be ignored when logging messages (contains mod IDs as strings)
+static var ignored_mods: Array[String] = []
+
 
 ## This Sub-Class represents a log entry in ModLoader.
 class ModLoaderLogEntry:
@@ -269,8 +292,8 @@ static func get_all() -> Array:
 	var log_entries := []
 
 	# Get all log entries
-	for entry_key in ModLoaderStore.logged_messages.all.keys():
-		var entry: ModLoaderLogEntry = ModLoaderStore.logged_messages.all[entry_key]
+	for entry_key in logged_messages.all.keys():
+		var entry: ModLoaderLogEntry = logged_messages.all[entry_key]
 		log_entries.append_array(entry.get_all_entries())
 
 	# Sort them by time
@@ -289,12 +312,12 @@ static func get_all() -> Array:
 static func get_by_mod(mod_name: String) -> Array:
 	var log_entries := []
 
-	if not ModLoaderStore.logged_messages.by_mod.has(mod_name):
+	if not logged_messages.by_mod.has(mod_name):
 		error("\"%s\" not found in logged messages." % mod_name, LOG_NAME)
 		return []
 
-	for entry_key in ModLoaderStore.logged_messages.by_mod[mod_name].keys():
-		var entry: ModLoaderLogEntry = ModLoaderStore.logged_messages.by_mod[mod_name][entry_key]
+	for entry_key in logged_messages.by_mod[mod_name].keys():
+		var entry: ModLoaderLogEntry = logged_messages.by_mod[mod_name][entry_key]
 		log_entries.append_array(entry.get_all_entries())
 
 	return log_entries
@@ -310,8 +333,8 @@ static func get_by_mod(mod_name: String) -> Array:
 static func get_by_type(type: String) -> Array:
 	var log_entries := []
 
-	for entry_key in ModLoaderStore.logged_messages.by_type[type].keys():
-		var entry: ModLoaderLogEntry = ModLoaderStore.logged_messages.by_type[type][entry_key]
+	for entry_key in logged_messages.by_type[type].keys():
+		var entry: ModLoaderLogEntry = logged_messages.by_type[type][entry_key]
 		log_entries.append_array(entry.get_all_entries())
 
 	return log_entries
@@ -349,8 +372,7 @@ static func _log(message: String, mod_name: String, log_type: String = "info", o
 	if only_once and _is_logged_before(log_entry):
 		return
 
-	if ModLoaderStore:
-		_store_log(log_entry)
+	_store_log(log_entry)
 
 	# Check if the scene_tree is available
 	if Engine.get_main_loop() and ModLoader:
@@ -375,37 +397,28 @@ static func _log(message: String, mod_name: String, log_type: String = "info", o
 			push_error(message)
 			_write_to_log_file(log_entry.get_entry())
 		"warning":
-			if _get_verbosity() >= VERBOSITY_LEVEL.WARNING:
+			if verbosity >= VERBOSITY_LEVEL.WARNING:
 				print(log_entry.get_prefix() + message)
 				push_warning(message)
 				_write_to_log_file(log_entry.get_entry())
 		"info", "success":
-			if _get_verbosity() >= VERBOSITY_LEVEL.INFO:
+			if verbosity >= VERBOSITY_LEVEL.INFO:
 				print(log_entry.get_prefix() + message)
 				_write_to_log_file(log_entry.get_entry())
 		"debug":
-			if _get_verbosity() >= VERBOSITY_LEVEL.DEBUG:
+			if verbosity >= VERBOSITY_LEVEL.DEBUG:
 				print(log_entry.get_prefix() + message)
 				_write_to_log_file(log_entry.get_entry())
 
 
 static func _is_mod_name_ignored(mod_name: String) -> bool:
-	if not ModLoaderStore:
+	if ignored_mods.size() == 0:
 		return false
 
-	var ignored_mod_names := ModLoaderStore.ml_options.ignored_mod_names_in_log as Array
+	if mod_name in ignored_mods:
+		return true
 
-	if not ignored_mod_names.size() == 0:
-		if mod_name in ignored_mod_names:
-			return true
 	return false
-
-
-static func _get_verbosity() -> int:
-	if not ModLoaderStore:
-		return VERBOSITY_LEVEL.DEBUG
-
-	return ModLoaderStore.ml_options.log_level
 
 
 static func _store_log(log_entry: ModLoaderLogEntry) -> void:
@@ -413,27 +426,27 @@ static func _store_log(log_entry: ModLoaderLogEntry) -> void:
 
 	# Store in all
 	# If it's a new entry
-	if not ModLoaderStore.logged_messages.all.has(log_entry.get_md5()):
-		ModLoaderStore.logged_messages.all[log_entry.get_md5()] = log_entry
+	if not logged_messages.all.has(log_entry.get_md5()):
+		logged_messages.all[log_entry.get_md5()] = log_entry
 	# If it's a existing entry
 	else:
-		existing_entry = ModLoaderStore.logged_messages.all[log_entry.get_md5()]
+		existing_entry = logged_messages.all[log_entry.get_md5()]
 		existing_entry.time = log_entry.time
 		existing_entry.stack.push_back(log_entry)
 
 	# Store in by_mod
 	# If the mod is not yet in "by_mod" init the entry
-	if not ModLoaderStore.logged_messages.by_mod.has(log_entry.mod_name):
-		ModLoaderStore.logged_messages.by_mod[log_entry.mod_name] = {}
+	if not logged_messages.by_mod.has(log_entry.mod_name):
+		logged_messages.by_mod[log_entry.mod_name] = {}
 
-	ModLoaderStore.logged_messages.by_mod[log_entry.mod_name][log_entry.get_md5()] = log_entry if not existing_entry else existing_entry
+	logged_messages.by_mod[log_entry.mod_name][log_entry.get_md5()] = log_entry if not existing_entry else existing_entry
 
 	# Store in by_type
-	ModLoaderStore.logged_messages.by_type[log_entry.type.to_lower()][log_entry.get_md5()] = log_entry if not existing_entry else existing_entry
+	logged_messages.by_type[log_entry.type.to_lower()][log_entry.get_md5()] = log_entry if not existing_entry else existing_entry
 
 
 static func _is_logged_before(entry: ModLoaderLogEntry) -> bool:
-	if not ModLoaderStore.logged_messages.all.has(entry.get_md5()):
+	if not logged_messages.all.has(entry.get_md5()):
 		return false
 
 	return true
