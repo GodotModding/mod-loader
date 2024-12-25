@@ -14,11 +14,11 @@ const HASH_COLLISION_ERROR := \
 const MOD_LOADER_HOOKS_START_STRING := \
 	"\n# ModLoader Hooks - The following code has been automatically added by the Godot Mod Loader."
 
-## \\bfunc\\s+		->	Match the word 'func' and one or more whitespace characters
-## \\b%s 				->	the function name
+## \\bfunc\\b\\s+		->	Match the word 'func' and one or more whitespace characters
+## \\b%s\\b 			->	the function name
 ## (?:.*\\n*)*?\\s*\\( 	->	Match any character between zero and unlimited times, but be lazy
-## 						and only do this until a '(' is found.
-const REGEX_MATCH_FUNC_WITH_WHITESPACE := "\\bfunc\\s+\\b%s(?:.*\\n*)*?\\s*\\("
+## 							and only do this until a '(' is found.
+const REGEX_MATCH_FUNC_WITH_WHITESPACE := "\\bfunc\\b\\s+\\b%s\\b(?:.*\\n*)*?\\s*\\("
 
 ## finds function names used as setters and getters (excluding inline definitions)
 ## group 2 and 4 contain the xetter names
