@@ -15,11 +15,11 @@ const MOD_LOADER_HOOKS_START_STRING := \
 	"\n# ModLoader Hooks - The following code has been automatically added by the Godot Mod Loader."
 
 ## (?<!#)			->	Ingore matches if 'func' is preceded by a '#'
-## \bfunc\\s+		->	Match the word 'func' and one or more whitespace characters
-## %s 				->	the function name
-## (?:.*\\n*)*?\\( 	->	Match any character between zero and unlimited times, but be lazy
+## \\bfunc\\s+		->	Match the word 'func' and one or more whitespace characters
+## \\b%s 				->	the function name
+## (?:.*\\n*)*?\\s*\\( 	->	Match any character between zero and unlimited times, but be lazy
 ## 						and only do this until a '(' is found.
-const REGEX_MATCH_FUNC_WITH_WHITESPACE := "(?<!#)\\bfunc\\s+%s(?:.*\\n*)*?\\("
+const REGEX_MATCH_FUNC_WITH_WHITESPACE := "(?<!#)\\bfunc\\s+\\b%s(?:.*\\n*)*?\\s*\\("
 
 ## finds function names used as setters and getters (excluding inline definitions)
 ## group 2 and 4 contain the xetter names
