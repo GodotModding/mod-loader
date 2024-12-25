@@ -103,6 +103,8 @@ func this_too\
 
 # func please_stop()
 #func please_stop()
+#      	func please_stop()
+ 	#      	func please_stop()
 func please_stop\
 #func please_stop(some_param: CoolClass)
 # func please_stop(some_param: CoolClass) wow (
