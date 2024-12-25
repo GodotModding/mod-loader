@@ -17,13 +17,6 @@ var _seven_teen: get = actually_get_something, set= actual_setter
 var eighteen: get = actually_get_something, \
 set= actual_setter
 
-func method(
-	one, #Some comment
-	two, 	three:  int, # More comments
-		four
-):
-	pass
-
 @export var one : Vector2 = Vector2.ZERO :
 	set(value):
 		one = value
@@ -52,16 +45,29 @@ var five:
 		pass
 		get_groups()
 
+
 func _ready() -> void:
 	pass
+
+
+func method(
+	one, #Some comment
+	two, 	three:  int, # More comments
+		four
+):
+	pass
+
 
 func super_something():
 	pass
 
+
 func super_something_else():
 	print("oy")
 
+
 func sup_func_two(): pass
+
 
 func sup_func():
 	pass
@@ -69,16 +75,14 @@ func sup_func():
 
 #func other_test_func(some_param: Cool):
 	#pass # test if comments match
-
-
 func other_test_func():
 	pass
 
 
+#func more_comment_testing(some_param: Cool) -> void:
+	#pass # test if comments match
 # 	func more_comment_testing(some_param: Cool) -> void:
 	#pass # test if comments match
-
-
 func more_comment_testing() -> void:
 	pass
 
@@ -97,14 +101,17 @@ func this_too\
 	pass
 
 
+# func please_stop()
+#func please_stop()
 func please_stop\
-# wow
-# wow (
-# wow
+#func please_stop(some_param: CoolClass)
+# func please_stop(some_param: CoolClass) wow (
+# wow ()
 #( wow
 		 \
 	 ():
 	pass
+
 
 func why_would_you(put: int, \
 	backslashes := "\\", in_here := "?!\n"
@@ -124,23 +131,30 @@ class SomeTestingSubclass:
 func param_super(one: int, two: String) -> int:
 	return one
 
+
 func other_param_super(one: int, two: String) -> int:
 	return one
+
 
 func get_something():
 	return "something"
 
+
 func set_something():
 	pass
+
 
 func actually_get_something():
 	pass
 
+
 func actual_setter(val):
 	six = val
 
+
 func set_exclude_me():
 	pass
+
 
 func get_exclude_me():
 	pass
@@ -149,33 +163,41 @@ func get_exclude_me():
 func definitely_a_coroutine(args := []):
 	await tree_entered
 
+
 func definitely_a_coroutine2(args := []):
 	var callback := func():
 		print("test")
 	return await callback.callv(args)
+
 
 func definitely_a_coroutine3(args := []):
 	var callback := func():
 		print("test")
 	return await callback.callv([self] + args)
 
+
 func definitely_a_coroutine4(args := []):
 	await get_tree().create_timer(1).timeout
+
 
 func absolutely_not_a_coroutine(args := []):
 	get_something() # await is a keyword
 	pass
 
+
 func definitely_a_coroutine5(args := []):
 	print("# hello", await get_something())
+
 
 func definitely_a_coroutine6(args := []):
 	print(""" test
 	# hello""", await get_something())
 
+
 func absolutely_not_a_coroutine2(args := []):
 	print(""" test
 	# hello""", get_something()) # don't await
+
 
 func definitely_a_coroutine7(args := []):
 	print("# \'hello", await get_something())
