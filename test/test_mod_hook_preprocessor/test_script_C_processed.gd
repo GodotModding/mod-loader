@@ -79,6 +79,27 @@ func vanilla_2078531418_other_test_func():
 	pass
 
 
+func vanilla_2078531418_hello_hello() -> void:
+	pass
+
+
+func vanilla_2078531418_hellohello(hello: String) -> void: # Hello? hello! hello()
+	pass
+
+
+func vanilla_2078531418_hello_hello_2(testing: String)\
+ -> String:
+	return ""
+
+
+func vanilla_2078531418_hello() -> void:
+	pass
+
+
+func vanilla_2078531418_hello_again() -> void:
+	pass
+
+
 #func more_comment_testing(some_param: Cool) -> void:
 	#pass # test if comments match
 # 	func more_comment_testing(some_param: Cool) -> void:
@@ -249,6 +270,41 @@ func other_test_func():
 		_ModLoaderHooks.call_hooks(vanilla_2078531418_other_test_func, [], 124073286)
 	else:
 		vanilla_2078531418_other_test_func()
+
+
+func hello_hello():
+	if ModLoaderStore.any_mod_hooked:
+		_ModLoaderHooks.call_hooks(vanilla_2078531418_hello_hello, [], 2008108737)
+	else:
+		vanilla_2078531418_hello_hello()
+
+
+func hellohello(hello: String):
+	if ModLoaderStore.any_mod_hooked:
+		_ModLoaderHooks.call_hooks(vanilla_2078531418_hellohello, [hello], 1633231170)
+	else:
+		vanilla_2078531418_hellohello(hello)
+
+
+func hello_hello_2(testing: String) -> String:
+	if ModLoaderStore.any_mod_hooked:
+		return _ModLoaderHooks.call_hooks(vanilla_2078531418_hello_hello_2, [testing], 692064114)
+	else:
+		return vanilla_2078531418_hello_hello_2(testing)
+
+
+func hello():
+	if ModLoaderStore.any_mod_hooked:
+		_ModLoaderHooks.call_hooks(vanilla_2078531418_hello, [], 1772795918)
+	else:
+		vanilla_2078531418_hello()
+
+
+func hello_again():
+	if ModLoaderStore.any_mod_hooked:
+		_ModLoaderHooks.call_hooks(vanilla_2078531418_hello_again, [], 1999867085)
+	else:
+		vanilla_2078531418_hello_again()
 
 
 func more_comment_testing():

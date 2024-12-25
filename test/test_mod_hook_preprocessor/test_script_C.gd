@@ -79,6 +79,28 @@ func other_test_func():
 	pass
 
 
+func hello_hello() -> void:
+	pass
+
+
+func hellohello(hello: String) -> void: # Hello? hello! hello()
+	pass
+
+
+func hello_hello_2 # Hellow
+(testing: String)\
+ -> String:
+	return ""
+
+
+func hello() -> void:
+	pass
+
+
+func hello_again() -> void:
+	pass
+
+
 #func more_comment_testing(some_param: Cool) -> void:
 	#pass # test if comments match
 # 	func more_comment_testing(some_param: Cool) -> void:
