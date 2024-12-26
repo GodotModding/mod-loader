@@ -67,6 +67,6 @@ static func deprecated_message(msg: String, since_version: String = "") -> void:
 ## - [code]void[/code]
 static func _deprecated_log(msg: String) -> void:
 	if ModLoaderStore and ModLoaderStore.ml_options.ignore_deprecated_errors or OS.has_feature("standalone"):
-		ModLoaderLog.warning(msg, LOG_NAME)
+		ModLoaderLog.warning(msg, LOG_NAME, true)
 	else:
-		ModLoaderLog.fatal(msg, LOG_NAME)
+		ModLoaderLog.fatal(msg, LOG_NAME, true)

@@ -94,10 +94,10 @@ var saved_extension_paths := {}
 
 var logged_messages: Dictionary:
 	set(val):
-		ModLoaderDeprecated.deprecated_message("ModLoaderStore.logged_messages was moved to ModLoaderLog.logged_messages", "7.0.1")
+		ModLoaderDeprecated.deprecated_changed("ModLoaderStore.logged_messages", "ModLoaderLog.logged_messages", "7.0.1")
 		ModLoaderLog.logged_messages = val
 	get:
-		ModLoaderDeprecated.deprecated_message("ModLoaderStore.logged_messages was moved to ModLoaderLog.logged_messages", "7.0.1")
+		ModLoaderDeprecated.deprecated_changed("ModLoaderStore.logged_messages", "ModLoaderLog.logged_messages", "7.0.1")
 		return ModLoaderLog.logged_messages
 
 # Active user profile
