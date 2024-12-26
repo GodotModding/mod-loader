@@ -76,7 +76,8 @@ func give_default() -> String:
 	return _ModLoaderHooks.call_hooks(vanilla_2078459544_give_default, [], 3905258887)
 
 
-func did_you_know_you_can_realy_write_your_function___like_this(param_1: String, param_2=give_default()):
+func did_you_know_you_can_realy_write_your_function___like_this(param_1: String\
+, param_2=give_default()):
 	_ModLoaderHooks.call_hooks(vanilla_2078459544_did_you_know_you_can_realy_write_your_function___like_this, [param_1, param_2], 833669474)
 
 
