@@ -110,34 +110,37 @@ func validate_loadability() -> void:
 	if not is_manifest_loadable:
 		return
 	manifest.validate_workshop_id(self)
-	validate_game_version_compatibility(ModLoaderStore.ml_options.semantic_version)
+	validate_version_compatibility("game", manifest.compatible_game_version, ModLoaderStore.ml_options.semantic_version)
+	validate_version_compatibility("Mod Loader", manifest.compatible_mod_loader_version, ModLoaderStore.MODLOADER_VERSION)
 
 	is_loadable = load_errors.is_empty()
 
 
-func validate_game_version_compatibility(game_semver: String) -> void:
-	var game_major := int(game_semver.get_slice(".", 0))
-	var game_minor := int(game_semver.get_slice(".", 1))
+func validate_version_compatibility(for_what: String, compatible_versions: Array, check_semver: String) -> void:
+	var check_major := int(check_semver.get_slice(".", 0))
+	var check_minor := int(check_semver.get_slice(".", 1))
 
 	var valid_major := false
 	var valid_minor := false
-	for version in manifest.compatible_game_version:
+	for version in compatible_versions:
 		var compat_major := int(version.get_slice(".", 0))
 		var compat_minor := int(version.get_slice(".", 1))
-		if compat_major < game_major:
+		if compat_major < check_major:
 			continue
 		valid_major = true
 
-		if compat_minor < game_minor:
+		if compat_minor < check_minor:
 			continue
 		valid_minor = true
 
 	if not valid_major:
-		load_errors.append("This mod is incompatible with the current game version. (Current: %s, Compatible: %s)"
-			% [game_semver, ", ".join(manifest.compatible_game_version)]
+		load_errors.append("This mod is incompatible with the current %s version. (Current: %s, Compatible: %s)"
+			% [for_what, check_semver, ", ".join(manifest.compatible_game_version)]
 		)
 	if not valid_minor:
-		load_warnings.append("This mod may not be compatible with the current game version. Enable at your own risk.")
+		load_warnings.append("This mod may not be compatible with the current %s version. Enable at your own risk. (Current: %s, Compatible: %s)"
+			% [for_what, check_semver, ", ".join(manifest.compatible_game_version)]
+		)
 
 
 func validate_manifest_loadability() -> bool:
