@@ -1,247 +1,70 @@
 extends SceneTree
 
-const LOG_NAME := "ModLoader:Setup"
-
-const settings := {
-	"IS_LOADER_SETUP_APPLIED": "application/run/is_loader_setup_applied",
-	"IS_LOADER_SET_UP": "application/run/is_loader_set_up",
-	"MOD_LOADER_AUTOLOAD": "autoload/ModLoader",
-}
-
-# see: [method ModLoaderUtils.register_global_classes_from_array]
-const new_global_classes := [
-	{
-		"base": "Resource",
-		"class": "ModData",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/resources/mod_data.gd"
-	}, {
-		"base": "Node",
-		"class": "ModLoaderUtils",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/mod_loader_utils.gd"
-	}, {
-		"base": "Resource",
-		"class": "ModManifest",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/resources/mod_manifest.gd"
-	}, {
-		"base": "Resource",
-		"class": "ModLoaderCurrentOptions",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/resources/options_current.gd"
-	}, {
-		"base": "Resource",
-		"class": "ModLoaderOptionsProfile",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/resources/options_profile.gd"
-	}, {
-		"base": "Object",
-		"class": "ModLoaderConfig",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/api/config.gd"
-	}, {
-		"base": "Node",
-		"class": "ModLoaderDeprecated",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/api/deprecated.gd"
-	}, {
-		"base": "Object",
-		"class": "ModLoaderMod",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/api/mod.gd"
-	}, {
-		"base": "RefCounted",
-		"class": "ModLoaderModManager",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/api/mod_manager.gd"
-	}, {
-		"base": "Object",
-		"class": "_ModLoaderGodot",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/api/godot.gd"
-	}, {
-		"base": "Node",
-		"class": "_ModLoaderSteam",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/api/third_party/steam.gd"
-	}, {
-		"base": "Node",
-		"class": "ModLoaderLog",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/api/log.gd"
-	}, {
-		"base": "Object",
-		"class": "_ModLoaderHooks",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/internal/hooks.gd"
-	}, {
-		"base": "RefCounted",
-		"class": "ModLoaderHookChain",
-		"language": "GDScript",
-		"path": "res://addons/mod_loader/api/hook.gd"
-	}
-]
-
-# IMPORTANT: use the ModLoaderLog via this variable within this script!
-# Otherwise, script compilation will break on first load since the class is not defined.
-var ModLoaderSetupLog: Object = load("res://addons/mod_loader/setup/setup_log.gd")
-var ModLoaderSetupUtils: Object = load("res://addons/mod_loader/setup/setup_utils.gd")
-
-var path := {}
-var file_name := {}
-var is_only_setup: bool = ModLoaderSetupUtils.is_running_with_command_line_arg("--only-setup")
-var is_setup_create_override_cfg : bool = ModLoaderSetupUtils.is_running_with_command_line_arg("--setup-create-override-cfg")
-
 
 func _init() -> void:
-	ModLoaderSetupLog.debug("ModLoader setup initialized", LOG_NAME)
-
-	var mod_loader_index: int = ModLoaderSetupUtils.get_autoload_index("ModLoader")
-	var mod_loader_store_index: int = ModLoaderSetupUtils.get_autoload_index("ModLoaderStore")
-
-	# Avoid doubling the setup work
-	# Checks if the ModLoaderStore is the first autoload and ModLoader the second
-	if mod_loader_store_index == 0 and mod_loader_index == 1:
-		modded_start()
-		return
-
-	# Check if --setup-create-override-cfg is passed,
-	# in that case the ModLoader and ModLoaderStore just have to be somewhere in the autoloads.
-	if is_setup_create_override_cfg and mod_loader_index != -1 and mod_loader_store_index != -1:
-		modded_start()
-		return
-
-	setup_modloader()
-
-
-# ModLoader already setup - switch to the main scene
-func modded_start() -> void:
-	ModLoaderSetupLog.info("ModLoader is available, mods can be loaded!", LOG_NAME)
-
-	ModLoaderSetupUtils.get_window().set_title("%s (Modded)" % ProjectSettings.get_setting("application/config/name"))
-
-	var _error_change_scene_main := change_scene_to_file(ProjectSettings.get_setting("application/run/main_scene"))
-
-
-# Set up the ModLoader as an autoload and register the other global classes.
-func setup_modloader() -> void:
-	ModLoaderSetupLog.info("Setting up ModLoader", LOG_NAME)
-
-	# Setup path and file_name dict with all required paths and file names.
-	setup_file_data()
-
-	# Register all new helper classes as global
-	ModLoaderSetupUtils.register_global_classes_from_array(new_global_classes)
-
-	# Add ModLoader autoload (the * marks the path as autoload)
-	reorder_autoloads()
-	ProjectSettings.set_setting(settings.IS_LOADER_SET_UP, true)
-
-	# The game needs to be restarted first, before the loader is truly set up
-	# Set this here and check it elsewhere to prompt the user for a restart
-	ProjectSettings.set_setting(settings.IS_LOADER_SETUP_APPLIED, false)
-
-	if is_setup_create_override_cfg:
-		handle_override_cfg()
+	if ProjectSettings.get_setting("autoload/ModLoaderStore") and ProjectSettings.get_setting("autoload/ModLoader"):
+		print("Mod Loader already setup.")
+		print("Switch to main scene")
+		change_scene_to_file(ProjectSettings.get_setting("application/run/main_scene"))
 	else:
-		handle_project_binary()
-
-	# ModLoader is set up. A game restart is required to apply the ProjectSettings.
-	ModLoaderSetupLog.info("ModLoader is set up, a game restart is required.", LOG_NAME)
-
-	match true:
-		# If the --only-setup cli argument is passed, quit with exit code 0
-		is_only_setup:
-			quit(0)
-		# If no cli argument is passed, show message with OS.alert() and user has to restart the game
-		_:
-			OS.alert("The Godot ModLoader has been set up. Restart the game to apply the changes. Confirm to quit.")
-			quit(0)
+		setup()
 
 
-# Reorders the autoloads in the project settings, to get the ModLoader on top.
-func reorder_autoloads() -> void:
-	# remove and re-add autoloads
-	var original_autoloads := {}
-	for prop in ProjectSettings.get_property_list():
-			var name: String = prop.name
-			if name.begins_with("autoload/"):
-					var value: String = ProjectSettings.get_setting(name)
-					original_autoloads[name] = value
+func setup() -> void:
+		print("#################################")
+		print("Start Godot Mod Loader Setup")
+		print("#################################")
+		ProjectSettings.set_setting("application/config/use_hidden_project_data_directory", false)
+		if not ProjectSettings.get_setting("application/config/name").ends_with("Modded"):
+			ProjectSettings.set_setting("application/config/name", "%s - Modded" % ProjectSettings.get_setting("application/config/name"))
 
-	for autoload in original_autoloads.keys():
-			ProjectSettings.set_setting(autoload, null)
+		# Add Autoloads
+		ProjectSettings.set_setting("autoload/ModLoaderStore", "*res://addons/mod_loader/mod_loader_store.gd")
+		ProjectSettings.set_setting("autoload/ModLoader", "*res://addons/mod_loader/mod_loader.gd")
 
-	# Add ModLoaderStore autoload (the * marks the path as autoload)
-	ProjectSettings.set_setting("autoload/ModLoaderStore", "*" + "res://addons/mod_loader/mod_loader_store.gd")
+		print("Load mod loader class cache")
+		var global_script_class_cache_mod_loader := ConfigFile.new()
+		global_script_class_cache_mod_loader.load("res://addons/mod_loader/setup/global_script_class_cache_mod_loader.cfg")
+		print("Load game class cache")
+		var global_script_class_cache_game := ConfigFile.new()
+		global_script_class_cache_game.load("res://.godot/global_script_class_cache.cfg")
 
-	# Add ModLoader autoload (the * marks the path as autoload)
-	ProjectSettings.set_setting("autoload/ModLoader", "*" + "res://addons/mod_loader/mod_loader.gd")
+		print("Create new class cache")
+		var global_classes_mod_loader := global_script_class_cache_mod_loader.get_value("", "list")
+		var global_classes_game := global_script_class_cache_game.get_value("", "list")
+		print("Combine class cache")
+		var global_classes_combined := []
+		global_classes_combined.append_array(global_classes_mod_loader)
+		global_classes_combined.append_array(global_classes_game)
 
-	# add all previous autoloads back again
-	for autoload in original_autoloads.keys():
-			ProjectSettings.set_setting(autoload, original_autoloads[autoload])
+		if not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path("res://godot")):
+			print("Create godot dir")
+			DirAccess.make_dir_absolute(ProjectSettings.globalize_path("res://godot"))
 
+		print("Save combined class cache")
+		var global_script_class_cache_combined := ConfigFile.new()
+		global_script_class_cache_combined.set_value("", "list", global_classes_combined)
+		global_script_class_cache_combined.save("res://godot/global_script_class_cache.cfg")
 
-# Saves the ProjectSettings to a override.cfg file in the base game directory.
-func handle_override_cfg() -> void:
-	ModLoaderSetupLog.debug("using the override.cfg file", LOG_NAME)
-	var _save_custom_error: int = ProjectSettings.save_custom(ModLoaderSetupUtils.get_override_path())
+		print("copy uid_cache.bin")
+		# DirAccess can't open the uid_cache.bin for some reason.
+		var file_uid_cache := FileAccess.open("res://.godot/uid_cache.bin", FileAccess.READ)
+		var error_uid_cache := file_uid_cache.get_error()
+		print("error_uid_cache: %s" % error_string(error_uid_cache))
+		if error_uid_cache == OK:
+			var file_uid_cache_content := file_uid_cache.get_buffer(file_uid_cache.get_length())
+			var new_uid_cache := FileAccess.open("res://godot/uid_cache.bin", FileAccess.WRITE)
+			var error_new_uid_cache := new_uid_cache.get_error()
+			print("error_new_uid_cache: %s" % error_string(error_new_uid_cache))
+			if error_new_uid_cache == OK:
+				new_uid_cache.store_buffer(file_uid_cache_content)
 
+		print("Save Project Settings to override.cfg")
+		ProjectSettings.save_custom(ProjectSettings.globalize_path("res://override.cfg"))
 
-# Creates the project.binary file, adds it to the pck and removes the no longer needed project.binary file.
-func handle_project_binary() -> void:
-	ModLoaderSetupLog.debug("injecting the project.binary file", LOG_NAME)
-	create_project_binary()
-	inject_project_binary()
-	clean_up_project_binary_file()
-
-
-# Saves the project settings to a project.binary file inside the addons/mod_loader/ directory.
-func create_project_binary() -> void:
-	var _error_save_custom_project_binary = ProjectSettings.save_custom(path.game_base_dir + "addons/mod_loader/project.binary")
-
-
-# Add modified binary to the pck
-func inject_project_binary() -> void:
-	var output_add_project_binary := []
-	# It seems that we do not have a way to make it blocking in godot 4?
-	var _exit_code_add_project_binary := OS.execute(path.pck_tool, ["--pack", path.pck, "--action", "add", "--file", path.project_binary, "--remove-prefix", path.mod_loader_dir], output_add_project_binary)
-	ModLoaderSetupLog.debug_json_print("Adding custom project.binary to res://", output_add_project_binary, LOG_NAME)
-
-
-# Removes the project.binary file
-func clean_up_project_binary_file() -> void:
-	var dir = DirAccess.remove_absolute(path.project_binary)
+		restart()
 
 
-# Initialize the path and file_name dictionary
-func setup_file_data() -> void:
-	# C:/path/to/game/game.exe
-	path.exe = OS.get_executable_path()
-	# C:/path/to/game/
-	path.game_base_dir = ModLoaderSetupUtils.get_local_folder_dir()
-	# C:/path/to/game/addons/mod_loader
-	path.mod_loader_dir = path.game_base_dir + "addons/mod_loader/"
-	# C:/path/to/game/addons/mod_loader/vendor/godotpcktool/godotpcktool.exe
-	path.pck_tool = path.mod_loader_dir + "vendor/godotpcktool/godotpcktool.exe"
-	# can be supplied to override the exe_name
-	file_name.cli_arg_exe = ModLoaderSetupUtils.get_cmd_line_arg_value("--exe-name")
-	# can be supplied to override the pck_name
-	file_name.cli_arg_pck = ModLoaderSetupUtils.get_cmd_line_arg_value("--pck-name")
-	# game - or use the value of cli_arg_exe_name if there is one
-	file_name.exe = ModLoaderSetupUtils.get_file_name_from_path(path.exe, true, true) if file_name.cli_arg_exe == '' else file_name.cli_arg_exe
-	# game - or use the value of cli_arg_pck_name if there is one
-	# using exe_path.get_file() instead of exe_name
-	# so you don't override the pck_name with the --exe-name cli arg
-	# the main pack name is the same as the .exe name
-	# if --main-pack cli arg is not set
-	file_name.pck = ModLoaderSetupUtils.get_file_name_from_path(path.exe, true, true)  if file_name.cli_arg_pck == '' else file_name.cli_arg_pck
-	# C:/path/to/game/game.pck
-	path.pck = path.game_base_dir.plus_file(file_name.pck + '.pck')
-	# C:/path/to/game/addons/mod_loader/project.binary
-	path.project_binary = path.mod_loader_dir + "project.binary"
-
-	ModLoaderSetupLog.debug_json_print("path: ", path, LOG_NAME)
-	ModLoaderSetupLog.debug_json_print("file_name: ", file_name, LOG_NAME)
+func restart() -> void:
+	OS.set_restart_on_exit(true)
+	quit()
