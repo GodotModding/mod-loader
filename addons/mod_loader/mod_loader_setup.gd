@@ -29,8 +29,6 @@ func setup() -> void:
 		for file in godot_files:
 			copy_file(file, file.trim_prefix("res://.godot").insert(0, "res://godot"))
 
-		print(JSON.stringify(get_flat_view_dict("res://.godot"),"\t"))
-
 		print("Load mod loader class cache")
 		var global_script_class_cache_mod_loader := ConfigFile.new()
 		global_script_class_cache_mod_loader.load("res://addons/mod_loader/setup/global_script_class_cache_mod_loader.cfg")
