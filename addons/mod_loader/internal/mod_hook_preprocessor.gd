@@ -1,3 +1,4 @@
+@tool
 class_name _ModLoaderModHookPreProcessor
 extends RefCounted
 
@@ -13,10 +14,13 @@ const HASH_COLLISION_ERROR := \
 	"MODDING HOOKS ERROR: Hash collision between %s and %s. The collision can be resolved by renaming one of the methods or changing their script's path."
 const MOD_LOADER_HOOKS_START_STRING := \
 	"\n# ModLoader Hooks - The following code has been automatically added by the Godot Mod Loader."
+const ENGINE_VERSION_HEX_4_2_2 := 0x040202
 
+
+static var engine_version_hex: int = Engine.get_version_info().hex
 
 ## finds function names used as setters and getters (excluding inline definitions)
-## group 2 and 4 contain the xetter names
+## group 2 and 4 contain the setter names
 var regex_getter_setter := RegEx.create_from_string("(.*?[sg]et\\s*=\\s*)(\\w+)(\\g<1>)?(\\g<2>)?")
 
 ## finds every instance where super() is called
@@ -30,7 +34,6 @@ var regex_func_body := RegEx.create_from_string("(?smn)\\N*(\\n^(([\\t #]+\\N*)|
 
 ## Just await between word boundaries
 var regex_keyword_await := RegEx.create_from_string("\\bawait\\b")
-
 
 var hashmap := {}
 var script_paths_hooked := {}
@@ -181,7 +184,8 @@ func is_func_async(func_body_text: String) -> bool:
 	var in_multiline_string := false
 	var current_multiline_delimiter := ""
 
-	for line: String in lines:
+	for _line in lines:
+		var line: String = _line
 		var char_index := 0
 		while char_index < line.length():
 			if in_multiline_string:
@@ -310,11 +314,31 @@ func edit_vanilla_method(
 	return text
 
 
-func fix_method_super(method_name: String, func_body: RegExMatch, text: String) -> String:
+func fix_method_super(method_name: String, func_body: RegExMatch, text: String) -> String:	
+	if engine_version_hex < ENGINE_VERSION_HEX_4_2_2:
+		return fix_method_super_before_4_2_2(method_name, func_body, text)
+	
 	return regex_super_call.sub(
 		text, "super.%s" % method_name,
 		true, func_body.get_start(), func_body.get_end()
 	)
+
+
+# https://github.com/godotengine/godot/pull/86052
+# Quote:
+# When the end argument of RegEx.sub was used, 
+# it would truncate the Subject String before even doing the substitution.
+func fix_method_super_before_4_2_2(method_name: String, func_body: RegExMatch, text: String) -> String:
+	var text_after_func_body_end := text.substr(func_body.get_end())
+	
+	text = regex_super_call.sub(
+		text, "super.%s" % method_name,
+		true, func_body.get_start(), func_body.get_end()
+	)
+	
+	text = text + text_after_func_body_end
+	
+	return text
 
 
 static func get_func_body_start_index(func_def_end: int, source_code: String) -> int:
@@ -442,7 +466,7 @@ static func get_return_type_string(return_data: Dictionary) -> String:
 	if return_data.has("class_name") and not str(return_data.class_name).is_empty():
 		type_base = str(return_data.class_name)
 	else:
-		type_base = type_string(return_data.type)
+		type_base = get_type_name(return_data.type)
 
 	var type_hint: String = "" if return_data.hint_string.is_empty() else ("[%s]" % return_data.hint_string)
 
@@ -482,3 +506,90 @@ static func get_hook_check_else_string(
 				"METHOD_ARGS": method_arg_string_names_only
 			}
 		)
+
+
+# This function was taken from
+# https://github.com/godotengine/godot/blob/7e67b496ff7e35f66b88adcbdd5b252d01739cbb/modules/gdscript/tests/scripts/utils.notest.gd#L69
+# It is used instead of type_string because type_string does not exist in Godot 4.1
+static func get_type_name(type: Variant.Type) -> String:
+	match type:
+		TYPE_NIL:
+			return "Nil" # `Nil` in core, `null` in GDScript.
+		TYPE_BOOL:
+			return "bool"
+		TYPE_INT:
+			return "int"
+		TYPE_FLOAT:
+			return "float"
+		TYPE_STRING:
+			return "String"
+		TYPE_VECTOR2:
+			return "Vector2"
+		TYPE_VECTOR2I:
+			return "Vector2i"
+		TYPE_RECT2:
+			return "Rect2"
+		TYPE_RECT2I:
+			return "Rect2i"
+		TYPE_VECTOR3:
+			return "Vector3"
+		TYPE_VECTOR3I:
+			return "Vector3i"
+		TYPE_TRANSFORM2D:
+			return "Transform2D"
+		TYPE_VECTOR4:
+			return "Vector4"
+		TYPE_VECTOR4I:
+			return "Vector4i"
+		TYPE_PLANE:
+			return "Plane"
+		TYPE_QUATERNION:
+			return "Quaternion"
+		TYPE_AABB:
+			return "AABB"
+		TYPE_BASIS:
+			return "Basis"
+		TYPE_TRANSFORM3D:
+			return "Transform3D"
+		TYPE_PROJECTION:
+			return "Projection"
+		TYPE_COLOR:
+			return "Color"
+		TYPE_STRING_NAME:
+			return "StringName"
+		TYPE_NODE_PATH:
+			return "NodePath"
+		TYPE_RID:
+			return "RID"
+		TYPE_OBJECT:
+			return "Object"
+		TYPE_CALLABLE:
+			return "Callable"
+		TYPE_SIGNAL:
+			return "Signal"
+		TYPE_DICTIONARY:
+			return "Dictionary"
+		TYPE_ARRAY:
+			return "Array"
+		TYPE_PACKED_BYTE_ARRAY:
+			return "PackedByteArray"
+		TYPE_PACKED_INT32_ARRAY:
+			return "PackedInt32Array"
+		TYPE_PACKED_INT64_ARRAY:
+			return "PackedInt64Array"
+		TYPE_PACKED_FLOAT32_ARRAY:
+			return "PackedFloat32Array"
+		TYPE_PACKED_FLOAT64_ARRAY:
+			return "PackedFloat64Array"
+		TYPE_PACKED_STRING_ARRAY:
+			return "PackedStringArray"
+		TYPE_PACKED_VECTOR2_ARRAY:
+			return "PackedVector2Array"
+		TYPE_PACKED_VECTOR3_ARRAY:
+			return "PackedVector3Array"
+		TYPE_PACKED_COLOR_ARRAY:
+			return "PackedColorArray"
+		38: # TYPE_PACKED_VECTOR4_ARRAY
+			return "PackedVector4Array"
+	push_error("Argument `type` is invalid. Use `TYPE_*` constants.")
+	return "<invalid type>"

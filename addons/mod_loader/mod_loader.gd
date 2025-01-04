@@ -127,7 +127,8 @@ func _load_metadata(manifest_dict: Dictionary, zip_path := ""):
 
 func _load_mods(mod_data: Dictionary) -> void:
 	var mod_zip_paths: Array[String] = []
-	for mod: ModData in mod_data.values():
+	for _mod in mod_data.values():
+		var mod: ModData = _mod
 		if not mod.is_loadable:
 			continue
 		if not mod.zip_path:
