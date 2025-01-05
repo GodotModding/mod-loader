@@ -270,7 +270,7 @@ func setup_file_data() -> void:
 	path.mod_loader_dir = path.game_base_dir + "addons/mod_loader/"
 	path.pck_explorer = (
 		path.mod_loader_dir
-		+ "vendor/GodotPCKExplorer/win/GodotPCKExplorer.Console.exe"
+		+ get_pck_explorer_path()
 	)
 	# ! pck explorer doesn't like trailing `/` in a path !
 	path.temp_dir_path = path.mod_loader_dir + "setup/temp"
@@ -345,6 +345,15 @@ func get_combined_global_script_class_cache() -> ConfigFile:
 	global_script_class_cache_combined.set_value("", "list", global_classes_combined)
 
 	return global_script_class_cache_combined
+
+
+func get_pck_explorer_path() -> String:
+	var pck_explorer_path := "vendor/GodotPCKExplorer/GodotPCKExplorer.Console"
+
+	if OS.get_name() == "Windows":
+		return "%s.exe" % pck_explorer_path
+
+	return pck_explorer_path
 
 
 func restart() -> void:
