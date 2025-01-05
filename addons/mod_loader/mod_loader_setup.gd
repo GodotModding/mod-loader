@@ -238,13 +238,12 @@ func inject(pck_version: String = get_pck_version()) -> void:
 
 
 func split_pck() -> void:
-	var output_split_pck := []
 	var arguments := ["-s", path.exe]
 	ModLoaderSetupLog.debug(
 		"Splitting .pck from .exe: %s %s", [path.pck_explorer, arguments], LOG_NAME
 	)
 	# For unknown reasons the output only displays a single "[" - so only the executed arguments are logged.
-	var _exit_code_split_pck := OS.execute(path.pck_explorer, arguments, output_split_pck)
+	var _exit_code_split_pck := OS.execute(path.pck_explorer, arguments)
 
 
 # Removes the temp files
