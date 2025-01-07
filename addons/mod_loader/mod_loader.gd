@@ -168,9 +168,9 @@ func _init() -> void:
 	ModLoaderStore.mod_load_order = _ModLoaderDependency.get_load_order(ModLoaderStore.mod_data.values())
 
 	# Log mod order
-	for mod_i in ModLoaderStore.mod_load_order.size(): # mod === mod_data
-		var mod: ModData = ModLoaderStore.mod_load_order[mod_i]
-		ModLoaderLog.info("mod_load_order -> %s) %s" % [mod_i + 1, mod.dir_name], LOG_NAME)
+	for mod_index in ModLoaderStore.mod_load_order.size():
+		var mod: ModData = ModLoaderStore.mod_load_order[mod_index]
+		ModLoaderLog.info("mod_load_order -> %s) %s" % [mod_index + 1, mod.dir_name], LOG_NAME)
 
 	# Instance every mod and add it as a node to the Mod Loader
 	for mod in ModLoaderStore.mod_load_order:
