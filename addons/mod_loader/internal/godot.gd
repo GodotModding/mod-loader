@@ -24,10 +24,10 @@ static func check_autoload_positions() -> void:
 	# "allow_modloader_autoloads_anywhere" in the ModLoader Options can be enabled.
 	# With that only the correct order of, ModLoaderStore first and ModLoader second, is checked.
 	if ModLoaderStore.ml_options.allow_modloader_autoloads_anywhere:
-		_ModLoaderGodot.is_autoload_before("ModLoaderStore", "ModLoader", true)
+		is_autoload_before("ModLoaderStore", "ModLoader", true)
 	else:
-		var _pos_ml_store := _ModLoaderGodot.check_autoload_position("ModLoaderStore", 0, true)
-		var _pos_ml_core := _ModLoaderGodot.check_autoload_position("ModLoader", 1, true)
+		var _pos_ml_store := check_autoload_position("ModLoaderStore", 0, true)
+		var _pos_ml_core := check_autoload_position("ModLoader", 1, true)
 
 
 # Check if autoload_name_before is before autoload_name_after
