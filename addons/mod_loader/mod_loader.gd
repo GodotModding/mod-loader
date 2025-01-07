@@ -217,6 +217,7 @@ func _ready():
 		if OS.has_feature("editor"):
 			ModLoaderLog.warning("No mod hooks .zip will be created when running from the editor.", LOG_NAME)
 			ModLoaderLog.info("You can test mod hooks by running the preprocessor on the vanilla scripts once.", LOG_NAME)
+			ModLoaderLog.info("We recommend using the Mod Loader Dev Tool to process scripts in the editor. You can find it here: %s" % ModLoaderStore.MOD_LOADER_DEV_TOOL_URL, LOG_NAME)
 		else:
 			# Generate mod hooks
 			_ModLoaderModHookPacker.start()
