@@ -113,7 +113,7 @@ func validate(manifest: Dictionary, path: String) -> bool:
 	config_schema = ModLoaderUtils.get_dict_from_dict(godot_details, "config_schema")
 	steam_workshop_id = ModLoaderUtils.get_string_from_dict(godot_details, "steam_workshop_id")
 
-	_is_game_version_compatibility(mod_id)
+	_is_game_version_compatible(mod_id)
 
 	is_mod_id_array_valid(mod_id, dependencies, "dependency")
 	is_mod_id_array_valid(mod_id, incompatibilities, "incompatibility")
@@ -493,7 +493,7 @@ func _is_steam_workshop_id_valid(mod_id: String, steam_workshop_id_from_path: St
 	return true
 
 
-func _is_game_version_compatibility(mod_id: String) -> bool:
+func _is_game_version_compatible(mod_id: String) -> bool:
 	var game_version: String = ModLoaderStore.ml_options.semantic_version
 	var game_major := int(game_version.get_slice(".", 0))
 	var game_minor := int(game_version.get_slice(".", 1))
