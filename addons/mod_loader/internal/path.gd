@@ -179,7 +179,7 @@ static func get_zip_paths_in(folder_path: String) -> Array[String]:
 	var files := Array(DirAccess.get_files_at(folder_path))\
 	.filter(
 		func(file_name: String):
-			return file_name.get_extension() == "zip"
+			return is_zip(file_name)
 	).map(
 		func(file_name: String):
 			return ProjectSettings.globalize_path(folder_path.path_join(file_name))
