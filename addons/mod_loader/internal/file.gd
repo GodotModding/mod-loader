@@ -208,8 +208,6 @@ static func get_mod_dir_name_in_zip(zip_path: String) -> String:
 		# We asume tat the mod_main.gd is at the root of the mod dir
 		if file_path.ends_with("mod_main.gd") and file_path.split("/").size() == 3:
 			return file_path.split("/")[-2]
-		else:
-			""
 
 	return ""
 
