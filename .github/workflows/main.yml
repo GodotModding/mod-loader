@@ -23,13 +23,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check_dependencies:
-    runs-on: ubuntu-latest
-    name: PR Dependency Check
-    steps:
-      - uses: gregsdennis/dependencies-action@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   tests:
     name: "Running GUT tests on Godot 4.3"
     uses: ./.github/workflows/tests.yml
