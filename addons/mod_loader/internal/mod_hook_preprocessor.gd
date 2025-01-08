@@ -101,8 +101,13 @@ func process_script(path: String, enable_hook_check := false) -> String:
 		while not is_top_level_func(source_code, func_def.get_start(), is_static): # indent before "func"
 			func_def = match_func_with_whitespace(method.name, source_code, func_def.get_end())
 			if not func_def or max_loop <= 0: # Couldn't match any func like before
-				break # Means invalid Script, should never happen
+				break 	# Means invalid Script, unless it's a child script.
+								# In such cases, the method name might be listed in the script_method_list
+								# but absent in the actual source_code.
 			max_loop -= 1
+
+		if not func_def: # If no valid function definition is found after processing.
+			continue # Skip to the next iteration.
 
 		var func_body_start_index := get_func_body_start_index(func_def.get_end(), source_code)
 		if func_body_start_index == -1: # The function is malformed, opening ( was not closed by )
