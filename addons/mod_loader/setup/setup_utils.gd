@@ -6,6 +6,9 @@ class_name ModLoaderSetupUtils
 const LOG_NAME := "ModLoader:SetupUtils"
 
 
+static var ModLoaderSetupLog: Object = load("res://addons/mod_loader/setup/setup_log.gd")
+
+
 # Get the path to a local folder. Primarily used to get the  (packed) mods
 # folder, ie "res://mods" or the OS's equivalent, as well as the configs path
 static func get_local_folder_dir(subfolder: String = "") -> String:
@@ -73,7 +76,6 @@ static func get_override_path() -> String:
 
 # Register an array of classes to the global scope, since Godot only does that in the editor.
 static func register_global_classes_from_array(new_global_classes: Array) -> void:
-	var ModLoaderSetupLog: Object = load("res://addons/mod_loader/setup/setup_log.gd")
 	var registered_classes: Array = ProjectSettings.get_setting("_global_script_classes")
 	var registered_class_icons: Dictionary = ProjectSettings.get_setting("_global_script_class_icons")
 
@@ -98,7 +100,6 @@ static func register_global_classes_from_array(new_global_classes: Array) -> voi
 # Checks if all required fields are in the given [Dictionary]
 # Format: { "base": "ParentClass", "class": "ClassName", "language": "GDScript", "path": "res://path/class_name.gd" }
 static func _is_valid_global_class_dict(global_class_dict: Dictionary) -> bool:
-	var ModLoaderSetupLog: Object = load("res://addons/mod_loader/setup/setup_log.gd")
 	var required_fields := ["base", "class", "language", "path"]
 	if not global_class_dict.has_all(required_fields):
 		ModLoaderSetupLog.fatal("Global class to be registered is missing one of %s" % required_fields, LOG_NAME)
@@ -187,3 +188,99 @@ static func fix_godot_cmdline_args_string_space_splitting(args: PackedStringArra
 			fixed_args.append(arg_string)
 
 	return fixed_args
+
+
+# Slightly modified version of:
+# https://gist.github.com/willnationsdev/00d97aa8339138fd7ef0d6bd42748f6e
+# Removed .import from the extension filter.
+# p_match is a string that filters the list of files.
+# If p_match_is_regex is false, p_match is directly string-searched against the FILENAME.
+# If it is true, a regex object compiles p_match and runs it against the FILEPATH.
+static func get_flat_view_dict(
+	p_dir := "res://",
+ 	p_match := "",
+	p_match_file_extensions: Array[StringName] = [],
+	p_match_is_regex := false,
+	include_empty_dirs := false,
+	ignored_dirs: Array[StringName] = []
+) -> PackedStringArray:
+	var data: PackedStringArray = []
+	var regex: RegEx
+
+	if p_match_is_regex:
+		regex = RegEx.new()
+		var _compile_error: int = regex.compile(p_match)
+		if not regex.is_valid():
+			return data
+
+	var dirs := [p_dir]
+	var first := true
+	while not dirs.is_empty():
+		var dir_name : String = dirs.back()
+		var dir := DirAccess.open(dir_name)
+		dirs.pop_back()
+
+		if dir_name.lstrip("res://").get_slice("/", 0) in ignored_dirs:
+			continue
+
+		if dir:
+			var _dirlist_error: int = dir.list_dir_begin()
+			var file_name := dir.get_next()
+			if include_empty_dirs and not dir_name == p_dir:
+				data.append(dir_name)
+			while file_name != "":
+				if not dir_name == "res://":
+					first = false
+				# ignore hidden, temporary, or system content
+				if not file_name.begins_with(".") and not file_name.get_extension() == "tmp":
+					# If a directory, then add to list of directories to visit
+					if dir.current_is_dir():
+						dirs.push_back(dir.get_current_dir() + "/" + file_name)
+					# If a file, check if we already have a record for the same name
+					else:
+						var path := dir.get_current_dir() + ("/" if not first else "") + file_name
+						# grab all
+						if not p_match and not p_match_file_extensions:
+							data.append(path)
+						# grab matching strings
+						elif not p_match_is_regex and p_match and file_name.contains(p_match):
+							data.append(path)
+						# garb matching file extension
+						elif p_match_file_extensions and file_name.get_extension() in p_match_file_extensions:
+							data.append(path)
+						# grab matching regex
+						elif p_match_is_regex:
+							var regex_match := regex.search(path)
+							if regex_match != null:
+								data.append(path)
+				# Move on to the next file in this directory
+				file_name = dir.get_next()
+			# We've exhausted all files in this directory. Close the iterator.
+			dir.list_dir_end()
+	return data
+
+
+static func copy_file(from: String, to: String) -> void:
+	ModLoaderSetupLog.debug("Copy file from: \"%s\" to: \"%s\"" % [from, to], LOG_NAME)
+	var global_to_path := ProjectSettings.globalize_path(to.get_base_dir())
+
+	if not DirAccess.dir_exists_absolute(global_to_path):
+		ModLoaderSetupLog.debug("Creating dir \"%s\"" % global_to_path, LOG_NAME)
+		DirAccess.make_dir_recursive_absolute(global_to_path)
+
+	var file_from := FileAccess.open(from, FileAccess.READ)
+	var file_from_error := file_from.get_error()
+
+	if not file_from_error == OK:
+		ModLoaderSetupLog.error("Error accessing file \"%s\": %s" % [from, error_string(file_from_error)], LOG_NAME)
+		return
+
+	var file_from_content := file_from.get_buffer(file_from.get_length())
+	var file_to := FileAccess.open(to, FileAccess.WRITE)
+	var file_to_error := file_to.get_error()
+
+	if not file_to_error == OK:
+		ModLoaderSetupLog.error("Error writing file \"%s\": %s" % [to, error_string(file_to_error)], LOG_NAME)
+		return
+
+	file_to.store_buffer(file_from_content)
