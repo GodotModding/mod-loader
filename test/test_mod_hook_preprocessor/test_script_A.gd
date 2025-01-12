@@ -55,3 +55,7 @@ func _set_some_var_with_set(new_value):
 
 func _get_some_var_with_get():
 	return some_var_with_get
+
+
+func im_not_in_the_child_class() -> void:
+	pass

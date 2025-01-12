@@ -57,6 +57,10 @@ func vanilla_2078459544__get_some_var_with_get():
 	return some_var_with_get
 
 
+func vanilla_2078459544_im_not_in_the_child_class() -> void:
+	pass
+
+
 # ModLoader Hooks - The following code has been automatically added by the Godot Mod Loader.
 
 
@@ -87,3 +91,7 @@ func _set_some_var_with_set(new_value):
 
 func _get_some_var_with_get():
 	return _ModLoaderHooks.call_hooks(vanilla_2078459544__get_some_var_with_get, [], 2756748012)
+
+
+func im_not_in_the_child_class():
+	_ModLoaderHooks.call_hooks(vanilla_2078459544_im_not_in_the_child_class, [], 3426759564)

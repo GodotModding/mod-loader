@@ -8,3 +8,7 @@ func _ready() -> void:
 
 func that_is_super() -> void:
 	super()
+
+
+func im_not_in_the_parent_class() -> void:
+	pass
