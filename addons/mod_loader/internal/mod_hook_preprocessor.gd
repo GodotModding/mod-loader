@@ -347,7 +347,6 @@ static func build_mod_hook_string(
 	method_arg_string_names_only: String,
 	method_arg_string_with_defaults_and_types: String,
 	method_type: String,
-	is_returning: bool,
 	is_static: bool,
 	is_async: bool,
 	hook_id: int,
@@ -358,25 +357,21 @@ static func build_mod_hook_string(
 	var static_string := "static " if is_static else ""
 	var await_string := "await " if is_async else ""
 	var async_string := "_async" if is_async else ""
-	var return_var := "var %s = " % "return_var" if not method_type.is_empty() or is_returning else ""
-	var method_return := "return " if not method_type.is_empty() or is_returning else ""
 	var hook_check := "if ModLoaderStore.any_mod_hooked:\n\t\t" if enable_hook_check else ""
 	var hook_check_else := get_hook_check_else_string(
-			method_return, await_string, method_prefix, method_name, method_arg_string_names_only
+			await_string, method_prefix, method_name, method_arg_string_names_only
 		) if enable_hook_check else ""
 
 
 	return """
 {STATIC}func {METHOD_NAME}({METHOD_PARAMS}){RETURN_TYPE_STRING}:
-	{HOOK_CHECK}{METHOD_RETURN}{AWAIT}_ModLoaderHooks.call_hooks{ASYNC}({METHOD_PREFIX}_{METHOD_NAME}, [{METHOD_ARGS}], {HOOK_ID}){HOOK_CHECK_ELSE}
+	{HOOK_CHECK}return {AWAIT}_ModLoaderHooks.call_hooks{ASYNC}({METHOD_PREFIX}_{METHOD_NAME}, [{METHOD_ARGS}], {HOOK_ID}){HOOK_CHECK_ELSE}
 """.format({
 		"METHOD_PREFIX": method_prefix,
 		"METHOD_NAME": method_name,
 		"METHOD_PARAMS": method_arg_string_with_defaults_and_types,
 		"RETURN_TYPE_STRING": type_string,
 		"METHOD_ARGS": method_arg_string_names_only,
-		"METHOD_RETURN_VAR": return_var,
-		"METHOD_RETURN": method_return,
 		"STATIC": static_string,
 		"AWAIT": await_string,
 		"ASYNC": async_string,
@@ -455,28 +450,6 @@ static func get_return_type_string(return_data: Dictionary) -> String:
 	return "%s%s" % [type_base, type_hint]
 
 
-static func is_method_returning(func_body_string: String) -> bool:
-	var found_return := false
-	var from := 0
-
-	while not found_return:
-		var found_index := func_body_string.find(" return ", from)
-		if found_index == -1:
-			# Break the loop if no return string was found
-			break
-		else:
-			# Check if the line is commented
-			var line_start_index := func_body_string.rfind("\n", found_index)
-			var is_commented := func_body_string.substr(line_start_index, found_index - line_start_index).contains("#")
-			if is_commented:
-				continue
-
-			# If not we found a return in the func body
-			found_return = true
-
-	return found_return
-
-
 func collect_getters_and_setters(text: String) -> Dictionary:
 	var result := {}
 	# a valid match has 2 or 4 groups, split into the method names and the rest of the line
@@ -495,15 +468,13 @@ func collect_getters_and_setters(text: String) -> Dictionary:
 
 
 static func get_hook_check_else_string(
-	method_return: String,
 	await_string: String,
 	method_prefix: String,
 	method_name: String,
 	method_arg_string_names_only: String
 ) -> String:
-	return "\n\telse:\n\t\t{METHOD_RETURN}{AWAIT}{METHOD_PREFIX}_{METHOD_NAME}({METHOD_ARGS})".format(
+	return "\n\telse:\n\t\treturn {AWAIT}{METHOD_PREFIX}_{METHOD_NAME}({METHOD_ARGS})".format(
 			{
-				"METHOD_RETURN": method_return,
 				"AWAIT": await_string,
 				"METHOD_PREFIX": method_prefix,
 				"METHOD_NAME": method_name,
