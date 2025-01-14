@@ -120,6 +120,7 @@ func process_script(path: String, enable_hook_check := false) -> String:
 		var is_async := is_func_async(func_body.get_string())
 		var method_arg_string_with_defaults_and_types := get_function_parameters(method.name, source_code, is_static)
 		var method_arg_string_names_only := get_function_arg_name_string(method.args)
+		var is_returning := is_method_returning(func_body.get_string())
 
 		var hook_id := _ModLoaderHooks.get_hook_hash(path, method.name)
 		var hook_id_data := [path, method.name, true]
@@ -132,7 +133,7 @@ func process_script(path: String, enable_hook_check := false) -> String:
 			method_arg_string_names_only,
 			method_arg_string_with_defaults_and_types,
 			type_string,
-			method.return.usage,
+			is_returning,
 			is_static,
 			is_async,
 			hook_id,
@@ -346,7 +347,7 @@ static func build_mod_hook_string(
 	method_arg_string_names_only: String,
 	method_arg_string_with_defaults_and_types: String,
 	method_type: String,
-	return_prop_usage: int,
+	is_returning: bool,
 	is_static: bool,
 	is_async: bool,
 	hook_id: int,
@@ -357,8 +358,8 @@ static func build_mod_hook_string(
 	var static_string := "static " if is_static else ""
 	var await_string := "await " if is_async else ""
 	var async_string := "_async" if is_async else ""
-	var return_var := "var %s = " % "return_var" if not method_type.is_empty() or return_prop_usage == 131072 else ""
-	var method_return := "return " if not method_type.is_empty() or return_prop_usage == 131072 else ""
+	var return_var := "var %s = " % "return_var" if not method_type.is_empty() or is_returning else ""
+	var method_return := "return " if not method_type.is_empty() or is_returning else ""
 	var hook_check := "if ModLoaderStore.any_mod_hooked:\n\t\t" if enable_hook_check else ""
 	var hook_check_else := get_hook_check_else_string(
 			method_return, await_string, method_prefix, method_name, method_arg_string_names_only
@@ -452,6 +453,28 @@ static func get_return_type_string(return_data: Dictionary) -> String:
 	var type_hint: String = "" if return_data.hint_string.is_empty() else ("[%s]" % return_data.hint_string)
 
 	return "%s%s" % [type_base, type_hint]
+
+
+static func is_method_returning(func_body_string: String) -> bool:
+	var found_return := false
+	var from := 0
+
+	while not found_return:
+		var found_index := func_body_string.find("return", from)
+		if found_index == -1:
+			# Break the loop if no return string was found
+			break
+		else:
+			# Check if the line is commented
+			var line_start_index := func_body_string.rfind("\n", found_index)
+			var is_commented := func_body_string.substr(line_start_index, found_index - line_start_index).contains("#")
+			if is_commented:
+				continue
+
+			# If not we found a return in the func body
+			found_return = true
+
+	return found_return
 
 
 func collect_getters_and_setters(text: String) -> Dictionary:
