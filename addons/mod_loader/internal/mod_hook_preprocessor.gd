@@ -120,7 +120,6 @@ func process_script(path: String, enable_hook_check := false) -> String:
 		var is_async := is_func_async(func_body.get_string())
 		var method_arg_string_with_defaults_and_types := get_function_parameters(method.name, source_code, is_static)
 		var method_arg_string_names_only := get_function_arg_name_string(method.args)
-		var is_returning := is_method_returning(func_body.get_string())
 
 		var hook_id := _ModLoaderHooks.get_hook_hash(path, method.name)
 		var hook_id_data := [path, method.name, true]
@@ -133,7 +132,6 @@ func process_script(path: String, enable_hook_check := false) -> String:
 			method_arg_string_names_only,
 			method_arg_string_with_defaults_and_types,
 			type_string,
-			is_returning,
 			is_static,
 			is_async,
 			hook_id,
