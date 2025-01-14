@@ -361,7 +361,7 @@ static func build_mod_hook_string(
 	var async_string := "_async" if is_async else ""
 	var hook_check := "if ModLoaderStore.any_mod_hooked:\n\t\t" if enable_hook_check else ""
 	var hook_check_else := get_hook_check_else_string(
-			await_string, method_prefix, method_name, method_arg_string_names_only
+			return_string, await_string, method_prefix, method_name, method_arg_string_names_only
 		) if enable_hook_check else ""
 
 
@@ -471,13 +471,15 @@ func collect_getters_and_setters(text: String) -> Dictionary:
 
 
 static func get_hook_check_else_string(
+	return_string: String,
 	await_string: String,
 	method_prefix: String,
 	method_name: String,
 	method_arg_string_names_only: String
 ) -> String:
-	return "\n\telse:\n\t\treturn {AWAIT}{METHOD_PREFIX}_{METHOD_NAME}({METHOD_ARGS})".format(
+	return "\n\telse:\n\t\t{RETURN}{AWAIT}{METHOD_PREFIX}_{METHOD_NAME}({METHOD_ARGS})".format(
 			{
+				"RETURN": return_string,
 				"AWAIT": await_string,
 				"METHOD_PREFIX": method_prefix,
 				"METHOD_NAME": method_name,
