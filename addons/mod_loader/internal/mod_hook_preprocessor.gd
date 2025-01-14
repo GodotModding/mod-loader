@@ -460,7 +460,7 @@ static func is_method_returning(func_body_string: String) -> bool:
 	var from := 0
 
 	while not found_return:
-		var found_index := func_body_string.find("return", from)
+		var found_index := func_body_string.find(" return ", from)
 		if found_index == -1:
 			# Break the loop if no return string was found
 			break
