@@ -88,6 +88,7 @@ func process_script(path: String, enable_hook_check := false) -> String:
 			continue
 
 		var type_string := get_return_type_string(method.return)
+		var is_constructor: bool = method.name == "_init"
 		var is_static := true if method.flags == METHOD_FLAG_STATIC + METHOD_FLAG_NORMAL else false
 
 		var func_def: RegExMatch = match_func_with_whitespace(method.name, source_code)
@@ -132,7 +133,7 @@ func process_script(path: String, enable_hook_check := false) -> String:
 			method_arg_string_names_only,
 			method_arg_string_with_defaults_and_types,
 			type_string,
-			method.return.usage,
+			is_constructor,
 			is_static,
 			is_async,
 			hook_id,
@@ -346,7 +347,7 @@ static func build_mod_hook_string(
 	method_arg_string_names_only: String,
 	method_arg_string_with_defaults_and_types: String,
 	method_type: String,
-	return_prop_usage: int,
+	is_constructor: bool,
 	is_static: bool,
 	is_async: bool,
 	hook_id: int,
@@ -354,29 +355,27 @@ static func build_mod_hook_string(
 	enable_hook_check := false,
 ) -> String:
 	var type_string := " -> %s" % method_type if not method_type.is_empty() else ""
+	var return_string := "return " if not is_constructor else ""
 	var static_string := "static " if is_static else ""
 	var await_string := "await " if is_async else ""
 	var async_string := "_async" if is_async else ""
-	var return_var := "var %s = " % "return_var" if not method_type.is_empty() or return_prop_usage == 131072 else ""
-	var method_return := "return " if not method_type.is_empty() or return_prop_usage == 131072 else ""
 	var hook_check := "if ModLoaderStore.any_mod_hooked:\n\t\t" if enable_hook_check else ""
 	var hook_check_else := get_hook_check_else_string(
-			method_return, await_string, method_prefix, method_name, method_arg_string_names_only
+			return_string, await_string, method_prefix, method_name, method_arg_string_names_only
 		) if enable_hook_check else ""
 
 
 	return """
 {STATIC}func {METHOD_NAME}({METHOD_PARAMS}){RETURN_TYPE_STRING}:
-	{HOOK_CHECK}{METHOD_RETURN}{AWAIT}_ModLoaderHooks.call_hooks{ASYNC}({METHOD_PREFIX}_{METHOD_NAME}, [{METHOD_ARGS}], {HOOK_ID}){HOOK_CHECK_ELSE}
+	{HOOK_CHECK}{RETURN}{AWAIT}_ModLoaderHooks.call_hooks{ASYNC}({METHOD_PREFIX}_{METHOD_NAME}, [{METHOD_ARGS}], {HOOK_ID}){HOOK_CHECK_ELSE}
 """.format({
 		"METHOD_PREFIX": method_prefix,
 		"METHOD_NAME": method_name,
 		"METHOD_PARAMS": method_arg_string_with_defaults_and_types,
 		"RETURN_TYPE_STRING": type_string,
 		"METHOD_ARGS": method_arg_string_names_only,
-		"METHOD_RETURN_VAR": return_var,
-		"METHOD_RETURN": method_return,
 		"STATIC": static_string,
+		"RETURN": return_string,
 		"AWAIT": await_string,
 		"ASYNC": async_string,
 		"HOOK_ID": hook_id,
@@ -472,15 +471,15 @@ func collect_getters_and_setters(text: String) -> Dictionary:
 
 
 static func get_hook_check_else_string(
-	method_return: String,
+	return_string: String,
 	await_string: String,
 	method_prefix: String,
 	method_name: String,
 	method_arg_string_names_only: String
 ) -> String:
-	return "\n\telse:\n\t\t{METHOD_RETURN}{AWAIT}{METHOD_PREFIX}_{METHOD_NAME}({METHOD_ARGS})".format(
+	return "\n\telse:\n\t\t{RETURN}{AWAIT}{METHOD_PREFIX}_{METHOD_NAME}({METHOD_ARGS})".format(
 			{
-				"METHOD_RETURN": method_return,
+				"RETURN": return_string,
 				"AWAIT": await_string,
 				"METHOD_PREFIX": method_prefix,
 				"METHOD_NAME": method_name,
